@@ -1,0 +1,32 @@
+{
+  "name": "Neural",
+  "gpuCost": "high",
+  "background": "#000000",
+  "fog": { "color": "#000000", "near": 100, "far": 500 },
+  "ambientLight": { "color": "#111133", "intensity": 0.3 },
+  "directionalLight": { "color": "#4466ff", "intensity": 0.8 },
+  "nodeColors": {
+    "concept": "#00ccff",
+    "method": "#ff6600",
+    "parameter": "#00ff88",
+    "dataset": "#ffcc00",
+    "finding": "#ff3366",
+    "pitfall": "#ff0044",
+    "tool": "#9966ff",
+    "decision": "#33cccc",
+    "person": "#ff99cc"
+  },
+  "nodeMaterial": {
+    "emissive": 0.6,
+    "metalness": 0.3,
+    "roughness": 0.4
+  },
+  "edgeStyle": {
+    "color": "#2244aa",
+    "opacity": 0.5,
+    "linewidth": 1
+  },
+  "postProcessing": {
+    "bloom": { "enabled": true, "intensity": 1.5, "luminanceThreshold": 0.2 }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Organic",
+  "gpuCost": "medium",
+  "background": "#1a1210",
+  "fog": { "color": "#1a1210", "near": 150, "far": 600 },
+  "ambientLight": { "color": "#332211", "intensity": 0.4 },
+  "directionalLight": { "color": "#ffaa66", "intensity": 0.7 },
+  "nodeColors": {
+    "concept": "#e8a87c",
+    "method": "#d9534f",
+    "parameter": "#85dcb0",
+    "dataset": "#e6b422",
+    "finding": "#cf6a87",
+    "pitfall": "#c44536",
+    "tool": "#a78bfa",
+    "decision": "#41b3a3",
+    "person": "#f8b4b4"
+  },
+  "nodeMaterial": {
+    "emissive": 0.2,
+    "metalness": 0.0,
+    "roughness": 0.9
+  },
+  "edgeStyle": {
+    "color": "#6b4423",
+    "opacity": 0.35,
+    "linewidth": 1
+  },
+  "postProcessing": {
+    "bloom": { "enabled": true, "intensity": 0.5, "luminanceThreshold": 0.5 }
+  }
+}

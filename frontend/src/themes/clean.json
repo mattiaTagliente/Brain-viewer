@@ -1,0 +1,32 @@
+{
+  "name": "Clean",
+  "gpuCost": "low",
+  "background": "#f0f0f0",
+  "fog": null,
+  "ambientLight": { "color": "#ffffff", "intensity": 0.6 },
+  "directionalLight": { "color": "#ffffff", "intensity": 0.8 },
+  "nodeColors": {
+    "concept": "#4a90d9",
+    "method": "#e67e22",
+    "parameter": "#27ae60",
+    "dataset": "#f1c40f",
+    "finding": "#e74c3c",
+    "pitfall": "#c0392b",
+    "tool": "#8e44ad",
+    "decision": "#16a085",
+    "person": "#e91e63"
+  },
+  "nodeMaterial": {
+    "emissive": 0,
+    "metalness": 0.1,
+    "roughness": 0.8
+  },
+  "edgeStyle": {
+    "color": "#999999",
+    "opacity": 0.4,
+    "linewidth": 1
+  },
+  "postProcessing": {
+    "bloom": { "enabled": false, "intensity": 0, "luminanceThreshold": 1 }
+  }
+}

@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect } from "react";
+import { GraphScene } from "./components/GraphScene";
+import { DetailPanel } from "./components/DetailPanel";
+import { ThemePicker } from "./components/ThemePicker";
+import { Filters } from "./components/Filters";
+import { useGraphStore } from "./store/graphStore";
 
-function App() {
-  const [count, setCount] = useState(0)
+function StatusBar() {
+  const entities = useGraphStore((s) => s.entities);
+  const relations = useGraphStore((s) => s.relations);
+  const layoutProgress = useGraphStore((s) => s.layoutProgress);
+
+  const pct = Math.round(layoutProgress * 100);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 12,
+        left: 12,
+        zIndex: 20,
+        background: "rgba(0,0,0,0.6)",
+        padding: "4px 12px",
+        borderRadius: 8,
+        fontSize: 12,
+        color: "#888",
+        display: "flex",
+        gap: 16,
+      }}
+    >
+      <span>{entities.length} entities</span>
+      <span>{relations.length} relations</span>
+      {layoutProgress < 1 && <span>layout: {pct}%</span>}
+    </div>
+  );
+}
+
+export default function App() {
+  const loadGraph = useGraphStore((s) => s.loadGraph);
+
+  useEffect(() => {
+    loadGraph();
+  }, [loadGraph]);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <GraphScene />
+      <DetailPanel />
+      <ThemePicker />
+      <Filters />
+      <StatusBar />
     </>
-  )
+  );
 }
-
-export default App

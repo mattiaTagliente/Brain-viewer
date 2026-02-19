@@ -27,3 +27,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Orchestration logs (keep briefs, outputs, synthesis — not agent logs)
+docs/orchestration/**/*.log
