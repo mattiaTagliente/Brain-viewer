@@ -18,7 +18,15 @@ def _default_kg_path() -> Path:
         import platformdirs
         return Path(platformdirs.user_data_dir("llm_harness", appauthor=False)) / "knowledge.db"
     except ImportError:
-        return Path.home() / ".llm_harness" / "knowledge.db"
+        pass
+    # Windows: check AppData/Local (where platformdirs would put it)
+    local_appdata = os.environ.get("LOCALAPPDATA")
+    if local_appdata:
+        win_path = Path(local_appdata) / "llm_harness" / "knowledge.db"
+        if win_path.exists():
+            return win_path
+    # Unix fallback
+    return Path.home() / ".llm_harness" / "knowledge.db"
 
 
 class KGReader:
