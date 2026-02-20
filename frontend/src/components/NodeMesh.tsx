@@ -57,6 +57,7 @@ interface TrackballControlsLike {
 /** Single InstancedMesh for one entity type */
 function TypeGroup({
   group,
+  maxCount,
   positions,
   positionOverrides,
   themeConfig,
@@ -73,6 +74,7 @@ function TypeGroup({
   didDragRef,
 }: {
   group: EntityGroup;
+  maxCount: number;
   positions: Record<string, { x: number; y: number; z: number }>;
   positionOverrides: Map<string, NodePosition>;
   themeConfig: ThemeConfig;
@@ -93,30 +95,52 @@ function TypeGroup({
   const pulseStartRef = useRef<Map<string, { start: number; severity: Severity }>>(new Map());
 
   const { entities, entityIds, type } = group;
-  const count = entities.length;
 
-  // Material: one per group, colored by entity type
-  const material = useMemo(() => {
+  // Stable material ref — properties updated in place to avoid changing args
+  // (R3F v9 swapInstances has a bug: it doesn't call removeInteractivity for
+  // the old mesh or add the new mesh to the interaction list when eventCount
+  // stays the same, permanently breaking raycasting/click detection.)
+  const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  if (!materialRef.current) {
     const hex = themeConfig.nodeColors[type] || "#888888";
     const color = new THREE.Color(hex);
-    return new THREE.MeshStandardMaterial({
+    materialRef.current = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
       emissiveIntensity: themeConfig.nodeMaterial.emissive,
       metalness: themeConfig.nodeMaterial.metalness,
       roughness: themeConfig.nodeMaterial.roughness,
     });
+  }
+
+  // Update material properties when theme changes (without recreating the object)
+  useEffect(() => {
+    const mat = materialRef.current;
+    if (!mat) return;
+    const hex = themeConfig.nodeColors[type] || "#888888";
+    const color = new THREE.Color(hex);
+    mat.color.set(color);
+    mat.emissive.set(color);
+    mat.emissiveIntensity = themeConfig.nodeMaterial.emissive;
+    mat.metalness = themeConfig.nodeMaterial.metalness;
+    mat.roughness = themeConfig.nodeMaterial.roughness;
+    mat.needsUpdate = true;
   }, [themeConfig, type]);
 
+  // Dispose material only on component unmount
   useEffect(() => {
     return () => {
-      material.dispose();
+      materialRef.current?.dispose();
     };
-  }, [material]);
+  }, []);
 
   const updateInstances = useCallback((nowMs: number) => {
     const mesh = meshRef.current;
     if (!mesh) return;
+
+    // Set visible instance count (mesh is allocated with maxCount but we
+    // only render/raycast the entities currently in this group)
+    mesh.count = entities.length;
 
     const baseColor = new THREE.Color(themeConfig.nodeColors[type] || "#888888");
 
@@ -297,12 +321,13 @@ function TypeGroup({
     onHover(null);
   }, [onHover]);
 
-  if (count === 0) return null;
+  if (entities.length === 0) return null;
 
   return (
     <instancedMesh
+      key={maxCount}
       ref={meshRef}
-      args={[sharedGeom, material, count]}
+      args={[sharedGeom, materialRef.current, maxCount]}
       onPointerDown={handlePointerDown}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
@@ -541,6 +566,17 @@ export function NodeMesh({
     }
   });
 
+  // Pre-compute max counts per entity type from the FULL entity list.
+  // This lets InstancedMesh allocate once and avoid R3F's buggy swapInstances
+  // when the visible count grows during replay.
+  const maxCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entity of entities) {
+      counts.set(entity.entity_type, (counts.get(entity.entity_type) || 0) + 1);
+    }
+    return counts;
+  }, [entities]);
+
   // Filter entities
   const visibleEntities = useMemo(() => {
     let next = entities;
@@ -593,6 +629,7 @@ export function NodeMesh({
         <TypeGroup
           key={group.type}
           group={group}
+          maxCount={maxCounts.get(group.type) || group.entities.length}
           positions={positions}
           positionOverrides={positionOverridesRef.current}
           themeConfig={themeConfig}
