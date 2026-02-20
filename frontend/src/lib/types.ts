@@ -75,6 +75,31 @@ export interface TimelineEvent {
   data: Record<string, unknown>;
 }
 
+export interface RealtimeEvent {
+  event_type: "ENTITY_CREATED" | "OBSERVATION_ADDED" | "RELATION_CREATED";
+  timestamp: string;
+  entity_id: string | null;
+  data: Record<string, unknown>;
+}
+
+export type RealtimeMessage =
+  | {
+      type: "events";
+      seq: number;
+      events: RealtimeEvent[];
+      watermarks: Partial<Record<"entities" | "relations" | "observations", number>>;
+    }
+  | {
+      type: "heartbeat";
+      seq: number;
+    }
+  | {
+      type: "error";
+      seq?: number;
+      code?: string;
+      message: string;
+    };
+
 export interface EntityDetail extends Entity {
   observations: Observation[];
   relations: Relation[];

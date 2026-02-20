@@ -1,0 +1,9 @@
+{
+  "name": "Brain Viewer",
+  "short_name": "Brain Viewer",
+  "description": "3D Knowledge Graph Visualizer",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#1a1a2e"
+}

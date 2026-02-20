@@ -59,7 +59,7 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Build community centroid map
   const communityIds = [...new Set(communities.map((c) => c.id))].sort();
   const commCentroids: Record<string, { x: number; y: number; z: number }> = {};
-  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 200);
+  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 350);
   communityIds.forEach((cid, i) => {
     commCentroids[cid] = spherePoints[i] || { x: 0, y: 0, z: 0 };
   });
@@ -154,16 +154,16 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Create simulation
   const simulation = forceSimulation(nodes, 3)
     .randomSource(rng)
-    .force("charge", forceManyBody().strength(-80).distanceMax(300))
+    .force("charge", forceManyBody().strength(-250).distanceMax(600))
     .force(
       "link",
       forceLink(links)
         .id((d: any) => d.id)
-        .distance(50)
-        .strength(0.3)
+        .distance(80)
+        .strength(0.2)
     )
-    .force("center", forceCenter(0, 0, 0).strength(0.05))
-    .force("collide", forceCollide(8))
+    .force("center", forceCenter(0, 0, 0).strength(0.03))
+    .force("collide", forceCollide(25).iterations(2))
     .force("community", communityForce as any)
     .alpha(isIncremental ? 0.1 : 1.0)
     .alphaMin(0.001)

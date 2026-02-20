@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Entity, Relation, Community, Observation, NodePosition, EntityDetail, EntityType } from "../lib/types";
 import { fetchGraph, fetchEntity, savePositions } from "../lib/api";
+import { useUIStore } from "./uiStore";
 
 import neuralTheme from "../themes/neural.json";
 import cleanTheme from "../themes/clean.json";
@@ -25,6 +26,12 @@ export const THEMES: Record<string, ThemeConfig> = {
   organic: organicTheme as ThemeConfig,
 };
 
+const reducedMotionQuery =
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+const initialReducedMotion = reducedMotionQuery?.matches ?? false;
+
 interface GraphState {
   // Data
   entities: Entity[];
@@ -45,10 +52,16 @@ interface GraphState {
   loading: boolean;
   error: string | null;
   layoutProgress: number;
+  reducedMotion: boolean;
 
   // Filters
   filterEntityTypes: Set<string>;
   filterScope: string | null;
+
+  // Drag state
+  nodePointerActive: boolean;
+  draggedEntityId: string | null;
+  dragPosition: NodePosition | null;
 
   // Actions
   loadGraph: (scope?: string) => Promise<void>;
@@ -60,8 +73,16 @@ interface GraphState {
   setFinalPositions: (positions: Record<string, NodePosition>) => void;
   persistPositions: () => Promise<void>;
   setLayoutProgress: (p: number) => void;
+  setError: (error: string | null) => void;
   toggleEntityTypeFilter: (type: string) => void;
   setFilterScope: (scope: string | null) => void;
+  addEntity: (entity: Entity) => void;
+  addRelation: (relation: Relation) => void;
+  updateEntityObsCount: (entityId: string, delta: number) => void;
+  setNodePointerActive: (v: boolean) => void;
+  startDrag: (entityId: string, position: NodePosition) => void;
+  updateDrag: (position: NodePosition) => void;
+  endDrag: () => void;
 }
 
 export const useGraphStore = create<GraphState>((set, get) => ({
@@ -81,8 +102,12 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   loading: false,
   error: null,
   layoutProgress: 0,
+  reducedMotion: initialReducedMotion,
   filterEntityTypes: new Set(),
   filterScope: null,
+  nodePointerActive: false,
+  draggedEntityId: null,
+  dragPosition: null,
 
   loadGraph: async (scope?: string) => {
     set({ loading: true, error: null });
@@ -101,6 +126,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         positionsValid: data.positions_valid,
         positions,
         loading: false,
+        layoutProgress: data.positions_valid ? 1 : 0,
       });
     } catch (e) {
       set({ loading: false, error: String(e) });
@@ -113,6 +139,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       return;
     }
     set({ selectedEntityId: id });
+    useUIStore.getState().setShowDetailPanel(true);
     try {
       const detail = await fetchEntity(id);
       set({ selectedEntityDetail: detail });
@@ -143,6 +170,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   setLayoutProgress: (p) => set({ layoutProgress: p }),
 
+  setError: (error: string | null) => set({ error }),
+
   toggleEntityTypeFilter: (type) => {
     const current = new Set(get().filterEntityTypes);
     if (current.has(type)) current.delete(type);
@@ -151,4 +180,48 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   },
 
   setFilterScope: (scope) => set({ filterScope: scope }),
+
+  addEntity: (entity) =>
+    set((state) => ({
+      entities: [...state.entities, entity],
+    })),
+
+  addRelation: (relation) =>
+    set((state) => ({
+      relations: [...state.relations, relation],
+    })),
+
+  updateEntityObsCount: (entityId, delta) =>
+    set((state) => ({
+      entities: state.entities.map((entity) =>
+        entity.id === entityId
+          ? { ...entity, observation_count: Math.max(0, entity.observation_count + delta) }
+          : entity
+      ),
+      selectedEntityDetail:
+        state.selectedEntityDetail && state.selectedEntityDetail.id === entityId
+          ? {
+              ...state.selectedEntityDetail,
+              observation_count: Math.max(0, state.selectedEntityDetail.observation_count + delta),
+            }
+          : state.selectedEntityDetail,
+    })),
+
+  setNodePointerActive: (v) => set({ nodePointerActive: v }),
+
+  startDrag: (entityId, position) =>
+    set({ draggedEntityId: entityId, dragPosition: position }),
+
+  updateDrag: (position) =>
+    set({ dragPosition: position }),
+
+  endDrag: () =>
+    set({ draggedEntityId: null, dragPosition: null, nodePointerActive: false }),
 }));
+
+// Subscribe to prefers-reduced-motion changes at runtime
+if (reducedMotionQuery) {
+  reducedMotionQuery.addEventListener("change", (e: MediaQueryListEvent) => {
+    useGraphStore.setState({ reducedMotion: e.matches });
+  });
+}

@@ -52,11 +52,13 @@ async def get_graph(scope: str | None = None):
     # Compute structural hash
     current_hash = compute_structural_hash(entities, relations, communities, obs_counts)
 
-    # Get persisted positions (scoped)
+    # Get persisted positions (scoped) — always return them so the frontend
+    # can do an incremental layout when only a few entities changed, rather
+    # than a full recomputation from scratch.
     effective_scope = scope or "global"
     db = _sidecar()
     stored_hash = db.get_layout_hash(effective_scope)
-    positions = db.get_positions(effective_scope) if stored_hash == current_hash else {}
+    positions = db.get_positions(effective_scope)
 
     # Build community membership map for frontend
     entity_community: dict[str, str] = {}
@@ -108,7 +110,7 @@ async def get_timeline(
     compress: bool = True,
     gap_threshold: float = 60.0,
     since: str | None = None,
-    limit: int = Query(default=5000, le=50000),
+    limit: int = Query(default=50000, le=500000),
     offset: int = 0,
 ):
     """Chronological event stream with optional idle time compression."""
