@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { GraphScene } from "./components/GraphScene";
 import { DetailPanel } from "./components/DetailPanel";
-import { ThemePicker } from "./components/ThemePicker";
 import { Filters } from "./components/Filters";
 import { Timeline } from "./components/Timeline";
+import { SettingsPanel } from "./components/SettingsPanel";
+import { SpeedIndicator } from "./components/SpeedIndicator";
 import { useGraphStore } from "./store/graphStore";
 import { useUIStore } from "./store/uiStore";
 import { useReplayStore } from "./store/replayStore";
+import { useSettingsStore } from "./store/settingsStore";
 import { useRealtime } from "./hooks/useRealtime";
 
 function LoadingOverlay() {
@@ -99,6 +101,20 @@ function HomeButton() {
   );
 }
 
+function SettingsButton() {
+  const showSettings = useSettingsStore((s) => s.showSettings);
+  const setShowSettings = useSettingsStore((s) => s.setShowSettings);
+
+  return (
+    <button onClick={() => setShowSettings(!showSettings)} title="Settings" style={{
+      position: "absolute", top: 12, right: 12, zIndex: 20,
+      background: "rgba(0,0,0,0.6)", border: "1px solid #555", borderRadius: 8,
+      padding: "6px 12px", color: "#aaa", fontSize: 14, cursor: "pointer",
+      fontFamily: "'Inter', system-ui, sans-serif",
+    }}>&#9881;</button>
+  );
+}
+
 function StatusBar({ realtimeConnected }: { realtimeConnected: boolean }) {
   const entities = useGraphStore((s) => s.entities);
   const relations = useGraphStore((s) => s.relations);
@@ -163,6 +179,9 @@ export default function App() {
   const setShowDetailPanel = useUIStore((s) => s.setShowDetailPanel);
   const showTimeline = useUIStore((s) => s.showTimeline);
 
+  const showSettings = useSettingsStore((s) => s.showSettings);
+  const setShowSettings = useSettingsStore((s) => s.setShowSettings);
+
   const replayActive = useReplayStore((s) => s.replayActive);
   const toggleReplayPlay = useReplayStore((s) => s.togglePlay);
 
@@ -178,6 +197,10 @@ export default function App() {
 
       if (event.key === "Escape") {
         event.preventDefault();
+        if (showSettings) {
+          setShowSettings(false);
+          return;
+        }
         if (selectedEntityId) {
           void selectEntity(null);
           return;
@@ -235,6 +258,8 @@ export default function App() {
     focusEntity,
     showDetailPanel,
     setShowDetailPanel,
+    showSettings,
+    setShowSettings,
     toggleReplayPlay,
   ]);
 
@@ -243,7 +268,9 @@ export default function App() {
       <GraphScene />
       <LoadingOverlay />
       {showDetailPanel && <DetailPanel />}
-      <ThemePicker />
+      <SettingsButton />
+      <SettingsPanel />
+      <SpeedIndicator />
       <Filters />
       {showTimeline && <Timeline />}
       <HomeButton />

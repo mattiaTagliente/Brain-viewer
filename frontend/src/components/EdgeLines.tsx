@@ -7,6 +7,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGraphStore } from "../store/graphStore";
+import { useResolvedTheme } from "../store/settingsStore";
 import { useReplayStore } from "../store/replayStore";
 import type { Relation } from "../lib/types";
 
@@ -24,7 +25,7 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
 
   const relations = useGraphStore((s) => s.relations);
   const positions = useGraphStore((s) => s.positions);
-  const themeConfig = useGraphStore((s) => s.themeConfig);
+  const themeConfig = useResolvedTheme();
   const focusedEntityId = useGraphStore((s) => s.focusedEntityId);
   const reducedMotion = useGraphStore((s) => s.reducedMotion);
 

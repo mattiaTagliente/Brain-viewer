@@ -7,7 +7,9 @@
 import { useRef, useMemo, useEffect, useCallback, type MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { useGraphStore, type ThemeConfig } from "../store/graphStore";
+import { useGraphStore } from "../store/graphStore";
+import { useResolvedTheme } from "../store/settingsStore";
+import type { ThemeConfig } from "../themes/registry";
 import { useReplayStore } from "../store/replayStore";
 import type { Entity, EntityType, Severity, NodePosition } from "../lib/types";
 
@@ -361,7 +363,7 @@ export function NodeMesh({
 }) {
   const entities = useGraphStore((s) => s.entities);
   const positions = useGraphStore((s) => s.positions);
-  const themeConfig = useGraphStore((s) => s.themeConfig);
+  const themeConfig = useResolvedTheme();
   const hoveredEntityId = useGraphStore((s) => s.hoveredEntityId);
   const selectedEntityId = useGraphStore((s) => s.selectedEntityId);
   const focusedEntityId = useGraphStore((s) => s.focusedEntityId);

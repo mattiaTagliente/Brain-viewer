@@ -1,30 +1,7 @@
 import { create } from "zustand";
-import type { Entity, Relation, Community, Observation, NodePosition, EntityDetail, EntityType } from "../lib/types";
+import type { Entity, Relation, Community, Observation, NodePosition, EntityDetail } from "../lib/types";
 import { fetchGraph, fetchEntity, savePositions } from "../lib/api";
 import { useUIStore } from "./uiStore";
-
-import neuralTheme from "../themes/neural.json";
-import cleanTheme from "../themes/clean.json";
-import organicTheme from "../themes/organic.json";
-
-export interface ThemeConfig {
-  name: string;
-  gpuCost: string;
-  background: string;
-  fog: { color: string; near: number; far: number } | null;
-  ambientLight: { color: string; intensity: number };
-  directionalLight: { color: string; intensity: number };
-  nodeColors: Record<EntityType, string>;
-  nodeMaterial: { emissive: number; metalness: number; roughness: number };
-  edgeStyle: { color: string; opacity: number; linewidth: number };
-  postProcessing: { bloom: { enabled: boolean; intensity: number; luminanceThreshold: number } };
-}
-
-export const THEMES: Record<string, ThemeConfig> = {
-  neural: neuralTheme as ThemeConfig,
-  clean: cleanTheme as unknown as ThemeConfig,
-  organic: organicTheme as ThemeConfig,
-};
 
 const reducedMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -47,8 +24,6 @@ interface GraphState {
   selectedEntityDetail: EntityDetail | null;
   hoveredEntityId: string | null;
   focusedEntityId: string | null;
-  theme: string;
-  themeConfig: ThemeConfig;
   loading: boolean;
   error: string | null;
   layoutProgress: number;
@@ -68,7 +43,6 @@ interface GraphState {
   selectEntity: (id: string | null) => Promise<void>;
   hoverEntity: (id: string | null) => void;
   focusEntity: (id: string | null) => void;
-  setTheme: (name: string) => void;
   setIntermediatePositions: (positions: Record<string, NodePosition>) => void;
   setFinalPositions: (positions: Record<string, NodePosition>) => void;
   persistPositions: () => Promise<void>;
@@ -97,8 +71,6 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   selectedEntityDetail: null,
   hoveredEntityId: null,
   focusedEntityId: null,
-  theme: "clean",
-  themeConfig: cleanTheme as unknown as ThemeConfig,
   loading: false,
   error: null,
   layoutProgress: 0,
@@ -151,11 +123,6 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   hoverEntity: (id) => set({ hoveredEntityId: id }),
 
   focusEntity: (id) => set({ focusedEntityId: id }),
-
-  setTheme: (name) => {
-    const config = THEMES[name];
-    if (config) set({ theme: name, themeConfig: config });
-  },
 
   setIntermediatePositions: (positions) => set({ positions }),
 

@@ -12,6 +12,7 @@ import { EdgeLines } from "./EdgeLines";
 import { NodeLabels } from "./NodeLabels";
 import { useGraphStore } from "../store/graphStore";
 import { useReplayStore } from "../store/replayStore";
+import { useResolvedTheme, useSettingsStore } from "../store/settingsStore";
 import type { LayoutWorkerInput, LayoutWorkerOutput } from "../lib/types";
 
 const CAMERA_STORAGE_KEY = "brain-viewer-camera";
@@ -64,7 +65,7 @@ function computeAutoFit(
 }
 
 // WASD navigation speed (units per second)
-const NAV_SPEED = 150;
+const NAV_SPEED = 500;
 
 // Keys tracked for WASD+QE navigation
 const NAV_KEYS = new Set(["w", "a", "s", "d", "q", "e"]);
@@ -81,6 +82,11 @@ function CameraController({
   const controlsRef = useRef<any>(null);
   const positions = useGraphStore((s) => s.positions);
   const positionsValid = useGraphStore((s) => s.positionsValid);
+  const navSpeed = useSettingsStore((s) => s.navSpeed);
+  const zoomSensitivity = useSettingsStore((s) => s.zoomSensitivity);
+  const incrementNavSpeed = useSettingsStore((s) => s.incrementNavSpeed);
+  const decrementNavSpeed = useSettingsStore((s) => s.decrementNavSpeed);
+  const showSettings = useSettingsStore((s) => s.showSettings);
   const hasAutoFit = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keysPressed = useRef<Set<string>>(new Set());
@@ -114,7 +120,7 @@ function CameraController({
     return () => { delete (window as any).__brainViewerGoHome; };
   }, [camera]);
 
-  // WASD+QE key tracking
+  // WASD+QE key tracking + speed controls (R/F)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target;
@@ -122,7 +128,17 @@ function CameraController({
         const tag = target.tagName.toLowerCase();
         if (target.isContentEditable || tag === "input" || tag === "textarea" || tag === "select") return;
       }
+
       const key = e.key.toLowerCase();
+
+      if (key === "r" || key === "f") {
+        if (showSettings) return;
+        e.preventDefault();
+        if (key === "r") incrementNavSpeed();
+        else decrementNavSpeed();
+        return;
+      }
+
       if (NAV_KEYS.has(key)) {
         keysPressed.current.add(key);
       }
@@ -140,7 +156,7 @@ function CameraController({
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, []);
+  }, [decrementNavSpeed, incrementNavSpeed, showSettings]);
 
   // Apply WASD movement each frame
   const _forward = useRef(new THREE.Vector3());
@@ -159,7 +175,7 @@ function CameraController({
     // Up is perpendicular to both forward and right (camera-relative)
     _up.current.crossVectors(_right.current, _forward.current).normalize();
 
-    const speed = NAV_SPEED * delta;
+    const speed = NAV_SPEED * navSpeed * delta;
     _move.current.set(0, 0, 0);
 
     if (keysPressed.current.has("w")) _move.current.addScaledVector(_forward.current, speed);
@@ -238,7 +254,7 @@ function CameraController({
       domElement={controlsDomElement}
       enabled={controlsEnabled}
       rotateSpeed={3}
-      zoomSpeed={2}
+      zoomSpeed={zoomSensitivity}
       panSpeed={1}
       noRotate={false}
       noZoom={false}
@@ -253,7 +269,7 @@ function CameraController({
 }
 
 function SceneContent() {
-  const themeConfig = useGraphStore((s) => s.themeConfig);
+  const themeConfig = useResolvedTheme();
   const reducedMotion = useGraphStore((s) => s.reducedMotion);
   const focusEntity = useGraphStore((s) => s.focusEntity);
   const selectEntity = useGraphStore((s) => s.selectEntity);
@@ -317,7 +333,7 @@ function SceneContent() {
 }
 
 export function GraphScene() {
-  const themeConfig = useGraphStore((s) => s.themeConfig);
+  const themeConfig = useResolvedTheme();
   const entities = useGraphStore((s) => s.entities);
   const relations = useGraphStore((s) => s.relations);
   const communities = useGraphStore((s) => s.communities);
