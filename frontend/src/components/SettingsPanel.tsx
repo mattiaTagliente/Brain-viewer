@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   NAV_SPEED_MAX,
   NAV_SPEED_MIN,
+  ORBIT_DAMPING_MAX,
+  ORBIT_DAMPING_MIN,
+  ORBIT_MAX,
+  ORBIT_MIN,
   ZOOM_MAX,
   ZOOM_MIN,
   useActiveThemeName,
@@ -217,8 +221,12 @@ export function SettingsPanel() {
 
   const navSpeed = useSettingsStore((s) => s.navSpeed);
   const zoomSensitivity = useSettingsStore((s) => s.zoomSensitivity);
+  const orbitSensitivity = useSettingsStore((s) => s.orbitSensitivity);
+  const orbitDamping = useSettingsStore((s) => s.orbitDamping);
   const setNavSpeed = useSettingsStore((s) => s.setNavSpeed);
   const setZoomSensitivity = useSettingsStore((s) => s.setZoomSensitivity);
+  const setOrbitSensitivity = useSettingsStore((s) => s.setOrbitSensitivity);
+  const setOrbitDamping = useSettingsStore((s) => s.setOrbitDamping);
 
   const activeTheme = useSettingsStore((s) => s.activeTheme);
   const setActiveTheme = useSettingsStore((s) => s.setActiveTheme);
@@ -385,6 +393,24 @@ export function SettingsPanel() {
             step={0.1}
             value={zoomSensitivity}
             onChange={(value) => setZoomSensitivity(value)}
+            formatValue={(value) => formatSliderValue(value)}
+          />
+          <SliderRow
+            label="Orbit"
+            min={ORBIT_MIN}
+            max={ORBIT_MAX}
+            step={0.1}
+            value={orbitSensitivity}
+            onChange={(value) => setOrbitSensitivity(value)}
+            formatValue={(value) => formatSliderValue(value)}
+          />
+          <SliderRow
+            label="Damping"
+            min={ORBIT_DAMPING_MIN}
+            max={ORBIT_DAMPING_MAX}
+            step={0.01}
+            value={orbitDamping}
+            onChange={(value) => setOrbitDamping(value)}
             formatValue={(value) => formatSliderValue(value)}
           />
         </CollapsibleSection>

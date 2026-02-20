@@ -480,11 +480,10 @@ export function NodeMesh({
       if (!pending) return;
 
       if (dragActiveRef.current) {
-        // Was a drag — start elastic return
+        // Was a drag — start elastic return while keeping drag state alive
+        // so EdgeLines continues tracking via draggedEntityId/dragPosition.
         const state = useGraphStore.getState();
         const currentDragPos = state.dragPosition;
-
-        endDrag();
 
         if (currentDragPos) {
           returningEntities.current.set(pending.entityId, {
@@ -493,6 +492,10 @@ export function NodeMesh({
             to: { ...pending.originalPos },
             startTime: performance.now(),
           });
+          // Do NOT call endDrag() here — the useFrame elastic return loop
+          // will call updateDrag() each frame and endDrag() on completion.
+        } else {
+          endDrag();
         }
       }
 
@@ -541,7 +544,8 @@ export function NodeMesh({
       }
     }
 
-    // Animate elastic returns
+    // Animate elastic returns — update store drag position each frame so
+    // EdgeLines tracks the returning node via draggedEntityId/dragPosition.
     const now = performance.now();
     for (const [entityId, ret] of returningEntities.current) {
       const elapsed = now - ret.startTime;
@@ -550,11 +554,25 @@ export function NodeMesh({
       const x = ret.from.x + (ret.to.x - ret.from.x) * eased;
       const y = ret.from.y + (ret.to.y - ret.from.y) * eased;
       const z = ret.from.z + (ret.to.z - ret.from.z) * eased;
-      overrides.set(entityId, { x, y, z });
+      const animatedPos = { x, y, z };
+
+      overrides.set(entityId, animatedPos);
+
+      // Keep store's dragPosition in sync so EdgeLines follows
+      const dragState = useGraphStore.getState();
+      if (dragState.draggedEntityId === entityId) {
+        updateDrag(animatedPos);
+      }
 
       if (t >= 1) {
         returningEntities.current.delete(entityId);
         overrides.delete(entityId);
+
+        // Clear drag state now that the elastic return is complete
+        const completedState = useGraphStore.getState();
+        if (completedState.draggedEntityId === entityId) {
+          endDrag();
+        }
       }
     }
 

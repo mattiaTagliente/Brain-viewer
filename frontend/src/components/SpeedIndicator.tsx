@@ -7,13 +7,15 @@ function formatSpeed(value: number): string {
   return `${rounded}x`;
 }
 
-export function SpeedIndicator() {
+export function SpeedIndicator({ mode }: { mode: "transient" | "persistent" }) {
   const navSpeed = useSettingsStore((s) => s.navSpeed);
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef<number | null>(null);
   const previousRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (mode !== "transient") return;
+
     if (previousRef.current === null) {
       previousRef.current = navSpeed;
       return;
@@ -30,7 +32,7 @@ export function SpeedIndicator() {
     }, 1500);
 
     previousRef.current = navSpeed;
-  }, [navSpeed]);
+  }, [mode, navSpeed]);
 
   useEffect(() => {
     return () => {
@@ -43,48 +45,41 @@ export function SpeedIndicator() {
   const speedLabel = formatSpeed(navSpeed);
   const showBadge = Math.abs(navSpeed - 1.0) > 1e-6;
 
-  return (
-    <>
+  if (mode === "persistent") {
+    if (!showBadge) return null;
+    return (
       <div
         style={{
-          position: "absolute",
-          left: "50%",
-          bottom: 60,
-          transform: "translateX(-50%)",
-          zIndex: 20,
           pointerEvents: "none",
-          opacity: visible ? 1 : 0,
-          transition: "opacity 0.2s ease",
           background: "rgba(0,0,0,0.7)",
           color: "#fff",
-          fontSize: 12,
+          fontSize: 11,
           borderRadius: 999,
-          padding: "4px 10px",
+          padding: "3px 8px",
           fontFamily: "'Inter', system-ui, sans-serif",
+          alignSelf: "center",
         }}
       >
         {speedLabel}
       </div>
+    );
+  }
 
-      {showBadge && (
-        <div
-          style={{
-            position: "absolute",
-            right: 52,
-            bottom: 12,
-            zIndex: 20,
-            pointerEvents: "none",
-            background: "rgba(0,0,0,0.7)",
-            color: "#fff",
-            fontSize: 11,
-            borderRadius: 999,
-            padding: "3px 8px",
-            fontFamily: "'Inter', system-ui, sans-serif",
-          }}
-        >
-          {speedLabel}
-        </div>
-      )}
-    </>
+  return (
+    <div
+      style={{
+        pointerEvents: "none",
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.2s ease",
+        background: "rgba(0,0,0,0.7)",
+        color: "#fff",
+        fontSize: 12,
+        borderRadius: 999,
+        padding: "4px 10px",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
+    >
+      {speedLabel}
+    </div>
   );
 }

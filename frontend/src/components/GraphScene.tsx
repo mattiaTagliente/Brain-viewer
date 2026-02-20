@@ -84,6 +84,8 @@ function CameraController({
   const positionsValid = useGraphStore((s) => s.positionsValid);
   const navSpeed = useSettingsStore((s) => s.navSpeed);
   const zoomSensitivity = useSettingsStore((s) => s.zoomSensitivity);
+  const orbitSensitivity = useSettingsStore((s) => s.orbitSensitivity);
+  const orbitDamping = useSettingsStore((s) => s.orbitDamping);
   const incrementNavSpeed = useSettingsStore((s) => s.incrementNavSpeed);
   const decrementNavSpeed = useSettingsStore((s) => s.decrementNavSpeed);
   const showSettings = useSettingsStore((s) => s.showSettings);
@@ -253,14 +255,14 @@ function CameraController({
       ref={setControlsRef}
       domElement={controlsDomElement}
       enabled={controlsEnabled}
-      rotateSpeed={3}
+      rotateSpeed={orbitSensitivity}
       zoomSpeed={zoomSensitivity}
       panSpeed={1}
       noRotate={false}
       noZoom={false}
       noPan={false}
       staticMoving={false}
-      dynamicDampingFactor={0.15}
+      dynamicDampingFactor={orbitDamping}
       minDistance={1}
       maxDistance={50000}
       onChange={handleChange}

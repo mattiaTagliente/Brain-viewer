@@ -13,13 +13,24 @@ export const NAV_SPEED_BASE = 500;
 export const NAV_SPEED_STEP = 0.25;
 export const NAV_SPEED_MIN = 0.1;
 export const NAV_SPEED_MAX = 10.0;
+
 export const ZOOM_MIN = 0.1;
 export const ZOOM_MAX = 2.0;
 export const ZOOM_DEFAULT = 0.5;
 
+export const ORBIT_MIN = 0.1;
+export const ORBIT_MAX = 5.0;
+export const ORBIT_DEFAULT = 1.5;
+
+export const ORBIT_DAMPING_MIN = 0;
+export const ORBIT_DAMPING_MAX = 1;
+export const ORBIT_DAMPING_DEFAULT = 0.15;
+
 interface SettingsState {
   navSpeed: number;
   zoomSensitivity: number;
+  orbitSensitivity: number;
+  orbitDamping: number;
   activeTheme: string;
   themeOverrides: Partial<ThemeConfig> | null;
   customThemes: Record<string, ThemeConfig>;
@@ -29,6 +40,8 @@ interface SettingsState {
   incrementNavSpeed: () => void;
   decrementNavSpeed: () => void;
   setZoomSensitivity: (v: number) => void;
+  setOrbitSensitivity: (v: number) => void;
+  setOrbitDamping: (v: number) => void;
   setActiveTheme: (name: string) => void;
   setThemeOverride: <K extends keyof ThemeConfig>(key: K, value: ThemeConfig[K]) => void;
   clearOverrides: () => void;
@@ -93,6 +106,8 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       navSpeed: 1.0,
       zoomSensitivity: ZOOM_DEFAULT,
+      orbitSensitivity: ORBIT_DEFAULT,
+      orbitDamping: ORBIT_DAMPING_DEFAULT,
       activeTheme: "clean",
       themeOverrides: null,
       customThemes: {},
@@ -111,6 +126,8 @@ export const useSettingsStore = create<SettingsState>()(
         })),
 
       setZoomSensitivity: (v) => set({ zoomSensitivity: clamp(v, ZOOM_MIN, ZOOM_MAX) }),
+      setOrbitSensitivity: (v) => set({ orbitSensitivity: clamp(v, ORBIT_MIN, ORBIT_MAX) }),
+      setOrbitDamping: (v) => set({ orbitDamping: clamp(v, ORBIT_DAMPING_MIN, ORBIT_DAMPING_MAX) }),
 
       setActiveTheme: (name) => {
         const { customThemes } = get();
@@ -222,6 +239,8 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({
         navSpeed: state.navSpeed,
         zoomSensitivity: state.zoomSensitivity,
+        orbitSensitivity: state.orbitSensitivity,
+        orbitDamping: state.orbitDamping,
         activeTheme: state.activeTheme,
         themeOverrides: state.themeOverrides,
         customThemes: state.customThemes,

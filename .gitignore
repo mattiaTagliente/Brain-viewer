@@ -30,3 +30,9 @@ Thumbs.db
 
 # Orchestration logs (keep briefs, outputs, synthesis — not agent logs)
 docs/orchestration/**/*.log
+
+# Agent infrastructure (junctions, hard-link mirrors)
+.agent/
+AGENTS.md
+GEMINI.md
+opencode.json

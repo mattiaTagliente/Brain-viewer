@@ -82,11 +82,7 @@ export function Timeline() {
     return (
       <div
         style={{
-          position: "absolute",
-          left: 12,
-          right: 12,
-          bottom: 44,
-          zIndex: 25,
+          width: "100%",
           display: "flex",
           justifyContent: "center",
           pointerEvents: "auto",
@@ -116,11 +112,7 @@ export function Timeline() {
   return (
     <div
       style={{
-        position: "absolute",
-        left: 12,
-        right: 12,
-        bottom: 44,
-        zIndex: 25,
+        width: "100%",
         background: "rgba(0,0,0,0.7)",
         border: "1px solid #333",
         borderRadius: 8,

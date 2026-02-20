@@ -82,10 +82,6 @@ function HomeButton() {
       onClick={() => (window as any).__brainViewerGoHome?.()}
       title="Reset camera to home view"
       style={{
-        position: "absolute",
-        bottom: 12,
-        right: 12,
-        zIndex: 20,
         background: "rgba(0,0,0,0.6)",
         border: "1px solid #555",
         borderRadius: 8,
@@ -106,12 +102,22 @@ function SettingsButton() {
   const setShowSettings = useSettingsStore((s) => s.setShowSettings);
 
   return (
-    <button onClick={() => setShowSettings(!showSettings)} title="Settings" style={{
-      position: "absolute", top: 12, right: 12, zIndex: 20,
-      background: "rgba(0,0,0,0.6)", border: "1px solid #555", borderRadius: 8,
-      padding: "6px 12px", color: "#aaa", fontSize: 14, cursor: "pointer",
-      fontFamily: "'Inter', system-ui, sans-serif",
-    }}>&#9881;</button>
+    <button
+      onClick={() => setShowSettings(!showSettings)}
+      title="Settings"
+      style={{
+        background: "rgba(0,0,0,0.6)",
+        border: "1px solid #555",
+        borderRadius: 8,
+        padding: "6px 12px",
+        color: "#aaa",
+        fontSize: 14,
+        cursor: "pointer",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
+    >
+      &#9881;
+    </button>
   );
 }
 
@@ -125,10 +131,6 @@ function StatusBar({ realtimeConnected }: { realtimeConnected: boolean }) {
   return (
     <div
       style={{
-        position: "absolute",
-        bottom: 12,
-        left: 12,
-        zIndex: 20,
         background: "rgba(0,0,0,0.6)",
         padding: "4px 12px",
         borderRadius: 8,
@@ -156,6 +158,109 @@ function StatusBar({ realtimeConnected }: { realtimeConnected: boolean }) {
           Live
         </span>
       )}
+    </div>
+  );
+}
+
+function HUDOverlay({
+  realtimeConnected,
+  showTimeline,
+}: {
+  realtimeConnected: boolean;
+  showTimeline: boolean;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 20,
+        pointerEvents: "none",
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        gridTemplateRows: "auto 1fr auto",
+        padding: 12,
+      }}
+    >
+      {/* top-left: empty */}
+      <div style={{ gridColumn: 1, gridRow: 1, alignSelf: "start", justifySelf: "start" }} />
+
+      {/* top-right: settings button + filters */}
+      <div
+        style={{
+          gridColumn: 3,
+          gridRow: 1,
+          alignSelf: "start",
+          justifySelf: "end",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ pointerEvents: "auto" }}>
+          <SettingsButton />
+        </div>
+        <div style={{ pointerEvents: "auto" }}>
+          <Filters />
+        </div>
+      </div>
+
+      {/* bottom-left: status bar */}
+      <div
+        style={{
+          gridColumn: 1,
+          gridRow: 3,
+          alignSelf: "end",
+          justifySelf: "start",
+          pointerEvents: "none",
+        }}
+      >
+        <StatusBar realtimeConnected={realtimeConnected} />
+      </div>
+
+      {/* bottom-center: speed indicator (transient) + timeline */}
+      <div
+        style={{
+          gridColumn: 2,
+          gridRow: 3,
+          alignSelf: "end",
+          justifySelf: "center",
+          width: "min(980px, calc(100vw - 24px))",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+          pointerEvents: "none",
+        }}
+      >
+        <SpeedIndicator mode="transient" />
+        {showTimeline && (
+          <div style={{ width: "100%", pointerEvents: "auto" }}>
+            <Timeline />
+          </div>
+        )}
+      </div>
+
+      {/* bottom-right: speed badge + home button */}
+      <div
+        style={{
+          gridColumn: 3,
+          gridRow: 3,
+          alignSelf: "end",
+          justifySelf: "end",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "flex-end",
+          gap: 8,
+          pointerEvents: "none",
+        }}
+      >
+        <SpeedIndicator mode="persistent" />
+        <div style={{ pointerEvents: "auto" }}>
+          <HomeButton />
+        </div>
+      </div>
     </div>
   );
 }
@@ -268,13 +373,8 @@ export default function App() {
       <GraphScene />
       <LoadingOverlay />
       {showDetailPanel && <DetailPanel />}
-      <SettingsButton />
       <SettingsPanel />
-      <SpeedIndicator />
-      <Filters />
-      {showTimeline && <Timeline />}
-      <HomeButton />
-      <StatusBar realtimeConnected={realtimeConnected} />
+      <HUDOverlay realtimeConnected={realtimeConnected} showTimeline={showTimeline} />
     </>
   );
 }

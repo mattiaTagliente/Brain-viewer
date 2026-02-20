@@ -11,7 +11,6 @@ export function Filters() {
   const toggleEntityTypeFilter = useGraphStore((s) => s.toggleEntityTypeFilter);
   const entities = useGraphStore((s) => s.entities);
 
-  // Count entities per type
   const counts = new Map<string, number>();
   for (const e of entities) {
     counts.set(e.entity_type, (counts.get(e.entity_type) || 0) + 1);
@@ -20,10 +19,6 @@ export function Filters() {
   return (
     <div
       style={{
-        position: "absolute",
-        top: 52,
-        right: 12,
-        zIndex: 20,
         background: "rgba(0,0,0,0.6)",
         padding: "8px 12px",
         borderRadius: 8,
