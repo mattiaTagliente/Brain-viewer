@@ -12,6 +12,8 @@
 - **Realtime mode**: live-poll the KG database and animate changes as they happen
 - **Theme system**: switch between Neural (sci-fi dark), Clean (minimal), and Organic (biological) visual presets
 - **Camera controls**: zoom, pan, rotate, orbit freely in 3D space
+- **Responsive HUD controls**: search, entity filters, and home controls remain anchored inside viewport edges across desktop and mobile resolutions
+- **Taskbar launcher window persistence**: app-window Chrome size is seeded once, then reuses your last manual resize on subsequent launches
 
 ## Tech Stack
 
