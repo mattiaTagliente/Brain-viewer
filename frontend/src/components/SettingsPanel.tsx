@@ -19,6 +19,7 @@ import {
   validateThemeConfig,
   type ThemeConfig,
 } from "../themes/registry";
+import { useGraphStore } from "../store/graphStore";
 
 function capitalize(value: string): string {
   if (value.length === 0) return value;
@@ -239,6 +240,9 @@ export function SettingsPanel() {
   const customThemes = useSettingsStore((s) => s.customThemes);
   const resetToDefaults = useSettingsStore((s) => s.resetToDefaults);
 
+  const recalculateLayout = useGraphStore((s) => s.recalculateLayout);
+  const layoutProgress = useGraphStore((s) => s.layoutProgress);
+
   const resolvedTheme = useResolvedTheme();
   const activeThemeName = useActiveThemeName();
   const isCustomTheme = useIsCustomTheme();
@@ -413,6 +417,12 @@ export function SettingsPanel() {
             onChange={(value) => setOrbitDamping(value)}
             formatValue={(value) => formatSliderValue(value)}
           />
+          <ControlButton
+            onClick={recalculateLayout}
+            disabled={layoutProgress > 0 && layoutProgress < 1}
+          >
+            {layoutProgress > 0 && layoutProgress < 1 ? "Recalculating..." : "Recalculate layout"}
+          </ControlButton>
         </CollapsibleSection>
 
         <CollapsibleSection title="Theme" defaultOpen>

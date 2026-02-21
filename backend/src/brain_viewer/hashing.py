@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+# Bump this when layout algorithm parameters change to invalidate cached positions.
+LAYOUT_VERSION = "v2"
+
 
 def compute_structural_hash(
     entities: list[dict[str, Any]],
@@ -41,6 +44,7 @@ def compute_structural_hash(
 
     # Combine all into a single hashable string
     parts = []
+    parts.append(f"layout_version:{LAYOUT_VERSION}")
     parts.append("entities:" + "|".join(f"{a},{b},{c}" for a, b, c in entity_tuples))
     parts.append("relations:" + "|".join(f"{a},{b},{c}" for a, b, c in relation_triples))
     parts.append("obs_counts:" + "|".join(f"{a},{b}" for a, b in obs_tuples))

@@ -255,8 +255,8 @@ function CameraController({
       ref={setControlsRef}
       domElement={controlsDomElement}
       enabled={controlsEnabled}
-      rotateSpeed={orbitSensitivity}
-      zoomSpeed={zoomSensitivity}
+      rotateSpeed={orbitSensitivity * 0.1}
+      zoomSpeed={zoomSensitivity * 0.1}
       panSpeed={1}
       noRotate={false}
       noZoom={false}
@@ -268,6 +268,28 @@ function CameraController({
       onChange={handleChange}
     />
   );
+}
+
+/** Signals sceneReady on the first rendered frame after positions become valid. */
+function SceneReadySignal() {
+  const positionsValid = useGraphStore((s) => s.positionsValid);
+  const sceneReady = useGraphStore((s) => s.sceneReady);
+  const setSceneReady = useGraphStore((s) => s.setSceneReady);
+  const signaled = useRef(false);
+
+  useFrame(() => {
+    if (!signaled.current && positionsValid && !sceneReady) {
+      signaled.current = true;
+      setSceneReady(true);
+    }
+  });
+
+  // Reset when positions are invalidated (e.g. recalculate)
+  useEffect(() => {
+    if (!positionsValid) signaled.current = false;
+  }, [positionsValid]);
+
+  return null;
 }
 
 function SceneContent() {
@@ -320,6 +342,7 @@ function SceneContent() {
       </mesh>
 
       <CameraController controlsEnabled={!nodePointerActive} controlsRefExternal={controlsRef} />
+      <SceneReadySignal />
 
       {bloom.enabled && !reducedMotion && (
         <EffectComposer>
@@ -386,9 +409,9 @@ export function GraphScene() {
         if (!merged[entity.id]) {
           const centroid = entity.community_id ? commCentroids[entity.community_id] : null;
           merged[entity.id] = {
-            x: (centroid?.x ?? 0) + (Math.random() - 0.5) * 30,
-            y: (centroid?.y ?? 0) + (Math.random() - 0.5) * 30,
-            z: (centroid?.z ?? 0) + (Math.random() - 0.5) * 30,
+            x: (centroid?.x ?? 0) + (Math.random() - 0.5) * 120,
+            y: (centroid?.y ?? 0) + (Math.random() - 0.5) * 120,
+            z: (centroid?.z ?? 0) + (Math.random() - 0.5) * 120,
           };
         }
       }

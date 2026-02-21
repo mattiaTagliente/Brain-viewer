@@ -57,6 +57,9 @@ interface GraphState {
   startDrag: (entityId: string, position: NodePosition) => void;
   updateDrag: (position: NodePosition) => void;
   endDrag: () => void;
+  recalculateLayout: () => void;
+  sceneReady: boolean;
+  setSceneReady: (v: boolean) => void;
 }
 
 export const useGraphStore = create<GraphState>((set, get) => ({
@@ -80,9 +83,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   nodePointerActive: false,
   draggedEntityId: null,
   dragPosition: null,
+  sceneReady: false,
 
   loadGraph: async (scope?: string) => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, sceneReady: false });
     try {
       const data = await fetchGraph(scope);
       const positions: Record<string, NodePosition> = {};
@@ -184,6 +188,11 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   endDrag: () =>
     set({ draggedEntityId: null, dragPosition: null, nodePointerActive: false }),
+
+  recalculateLayout: () =>
+    set({ positionsValid: false, positions: {}, layoutProgress: 0, sceneReady: false }),
+
+  setSceneReady: (v) => set({ sceneReady: v }),
 }));
 
 // Subscribe to prefers-reduced-motion changes at runtime

@@ -15,6 +15,7 @@ import {
 import seedrandom from "seedrandom";
 
 import type { LayoutWorkerInput, LayoutWorkerOutput, NodePosition } from "../lib/types";
+import { GEOM_RADIUS, getNodeSize } from "../lib/nodeSize";
 
 interface SimNode {
   id: string;
@@ -25,6 +26,7 @@ interface SimNode {
   fy?: number | null;
   fz?: number | null;
   communityId: string | null;
+  observationCount: number;
   index?: number;
 }
 
@@ -59,14 +61,16 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Build community centroid map
   const communityIds = [...new Set(communities.map((c) => c.id))].sort();
   const commCentroids: Record<string, { x: number; y: number; z: number }> = {};
-  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 350);
+  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 600);
   communityIds.forEach((cid, i) => {
     commCentroids[cid] = spherePoints[i] || { x: 0, y: 0, z: 0 };
   });
 
-  // Build entity→community map
+  // Build entity→community map and member counts
   const entityCommunity: Record<string, string> = {};
+  const commMemberCounts: Record<string, number> = {};
   for (const comm of communities) {
+    commMemberCounts[comm.id] = comm.member_entity_ids.length;
     for (const eid of comm.member_entity_ids) {
       entityCommunity[eid] = comm.id;
     }
@@ -79,11 +83,11 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
     const centroid = commId ? commCentroids[commId] : { x: 0, y: 0, z: 0 };
 
     // Use existing position, or place near community centroid with jitter
-    const x = existing?.x ?? centroid.x + (rng() - 0.5) * 40;
-    const y = existing?.y ?? centroid.y + (rng() - 0.5) * 40;
-    const z = existing?.z ?? centroid.z + (rng() - 0.5) * 40;
+    const x = existing?.x ?? centroid.x + (rng() - 0.5) * 120;
+    const y = existing?.y ?? centroid.y + (rng() - 0.5) * 120;
+    const z = existing?.z ?? centroid.z + (rng() - 0.5) * 120;
 
-    return { id: e.id, x, y, z, communityId: commId };
+    return { id: e.id, x, y, z, communityId: commId, observationCount: e.observation_count };
   });
 
   // For incremental updates: freeze distant nodes
@@ -137,13 +141,16 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
     .filter((r) => nodeIdSet.has(r.subject_id) && nodeIdSet.has(r.object_id))
     .map((r) => ({ source: r.subject_id, target: r.object_id }));
 
-  // Community attractive force: pull nodes toward their community centroid
+  // Community attractive force: pull nodes toward their community centroid.
+  // Strength scales inversely with sqrt(community size) to prevent
+  // large communities from collapsing into an overlapping blob.
   function communityForce(alpha: number) {
     for (const node of nodes) {
       if (node.fx != null) continue; // skip pinned nodes
       const centroid = node.communityId ? commCentroids[node.communityId] : null;
       if (centroid) {
-        const strength = 0.05 * alpha;
+        const memberCount = node.communityId ? (commMemberCounts[node.communityId] || 1) : 1;
+        const strength = 0.03 * alpha / Math.max(1, Math.sqrt(memberCount));
         node.x += (centroid.x - node.x) * strength;
         node.y += (centroid.y - node.y) * strength;
         node.z += (centroid.z - node.z) * strength;
@@ -154,16 +161,16 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Create simulation
   const simulation = forceSimulation(nodes, 3)
     .randomSource(rng)
-    .force("charge", forceManyBody().strength(-250).distanceMax(600))
+    .force("charge", forceManyBody().strength(-400).distanceMax(800))
     .force(
       "link",
       forceLink(links)
         .id((d: any) => d.id)
-        .distance(80)
+        .distance(120)
         .strength(0.2)
     )
     .force("center", forceCenter(0, 0, 0).strength(0.03))
-    .force("collide", forceCollide(25).iterations(2))
+    .force("collide", forceCollide((d: SimNode) => 6 * GEOM_RADIUS * getNodeSize(d.observationCount)).iterations(10))
     .force("community", communityForce as any)
     .alpha(isIncremental ? 0.1 : 1.0)
     .alphaMin(0.001)

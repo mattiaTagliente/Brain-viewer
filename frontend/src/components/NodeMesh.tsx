@@ -12,19 +12,12 @@ import { useResolvedTheme } from "../store/settingsStore";
 import type { ThemeConfig } from "../themes/registry";
 import { useReplayStore } from "../store/replayStore";
 import type { Entity, EntityType, Severity, NodePosition } from "../lib/types";
+import { getNodeSize } from "../lib/nodeSize";
 
 const ENTITY_ANIM_MS = 500;
 const OBSERVATION_PULSE_MS = 800;
 const ELASTIC_RETURN_MS = 400;
 const DRAG_THRESHOLD_PX = 5;
-
-const SIZE_BUCKETS = [0.8, 1.2, 1.8, 2.5];
-function getNodeSize(obsCount: number): number {
-  if (obsCount <= 1) return SIZE_BUCKETS[0];
-  if (obsCount <= 5) return SIZE_BUCKETS[1];
-  if (obsCount <= 15) return SIZE_BUCKETS[2];
-  return SIZE_BUCKETS[3];
-}
 
 const PULSE_COLORS: Record<Severity, THREE.Color> = {
   blocking: new THREE.Color("#ef4444"),

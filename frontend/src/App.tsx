@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GraphScene } from "./components/GraphScene";
 import { DetailPanel } from "./components/DetailPanel";
 import { Filters } from "./components/Filters";
@@ -15,15 +15,32 @@ function LoadingOverlay() {
   const loading = useGraphStore((s) => s.loading);
   const error = useGraphStore((s) => s.error);
   const entities = useGraphStore((s) => s.entities);
+  const relations = useGraphStore((s) => s.relations);
   const layoutProgress = useGraphStore((s) => s.layoutProgress);
-  const positionsValid = useGraphStore((s) => s.positionsValid);
+  const sceneReady = useGraphStore((s) => s.sceneReady);
+  const [fadingOut, setFadingOut] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  // Trigger fade-out when scene becomes ready
+  useEffect(() => {
+    if (sceneReady && !error) {
+      setFadingOut(true);
+      const timer = setTimeout(() => setHidden(true), 600);
+      return () => clearTimeout(timer);
+    }
+    // Reset when scene goes back to not-ready (e.g. recalculate layout)
+    if (!sceneReady) {
+      setFadingOut(false);
+      setHidden(false);
+    }
+  }, [sceneReady, error]);
 
   if (error) {
     return (
       <div style={{
         position: "absolute", inset: 0, zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(0,0,0,0.85)", color: "#ef4444",
+        background: "rgba(0,0,0,0.92)", color: "#ef4444",
         fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
         flexDirection: "column", gap: 8,
       }}>
@@ -36,44 +53,60 @@ function LoadingOverlay() {
     );
   }
 
+  if (hidden) return null;
+
+  // Determine status message
+  let status: string;
   if (loading) {
-    return (
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(0,0,0,0.85)", color: "#888",
-        fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-      }}>
-        Loading graph data...
-      </div>
-    );
+    status = "Loading graph data...";
+  } else if (entities.length > 0 && layoutProgress < 1) {
+    status = `Computing layout for ${entities.length} entities...`;
+  } else if (entities.length > 0) {
+    status = "Preparing scene...";
+  } else {
+    status = "Connecting...";
   }
 
-  if (entities.length > 0 && !positionsValid && layoutProgress < 1) {
-    const pct = Math.round(layoutProgress * 100);
-    return (
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 100,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(0,0,0,0.7)", color: "#aaa",
-        fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-        flexDirection: "column", gap: 8,
-      }}>
-        <div>Computing layout for {entities.length} entities...</div>
-        <div style={{
-          width: 200, height: 4, background: "#333", borderRadius: 2,
-        }}>
-          <div style={{
-            width: `${pct}%`, height: "100%", background: "#4a90d9",
-            borderRadius: 2, transition: "width 0.3s",
-          }} />
+  const showProgress = !loading && entities.length > 0 && layoutProgress < 1;
+  const pct = Math.round(layoutProgress * 100);
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 100,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "rgba(0,0,0,0.92)",
+      fontFamily: "'Inter', system-ui, sans-serif",
+      flexDirection: "column", gap: 16,
+      opacity: fadingOut ? 0 : 1,
+      transition: "opacity 0.5s ease-out",
+      pointerEvents: fadingOut ? "none" : "auto",
+    }}>
+      <div style={{ color: "#ccc", fontSize: 22, fontWeight: 600, letterSpacing: 1 }}>
+        Brain Viewer
+      </div>
+
+      {entities.length > 0 && (
+        <div style={{ color: "#666", fontSize: 12, display: "flex", gap: 12 }}>
+          <span>{entities.length} entities</span>
+          <span>{relations.length} relations</span>
         </div>
-        <div style={{ color: "#666", fontSize: 12 }}>{pct}%</div>
-      </div>
-    );
-  }
+      )}
 
-  return null;
+      <div style={{ color: "#888", fontSize: 13 }}>{status}</div>
+
+      {showProgress && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 220, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
+            <div style={{
+              width: `${pct}%`, height: "100%", background: "#4a90d9",
+              borderRadius: 2, transition: "width 0.3s",
+            }} />
+          </div>
+          <div style={{ color: "#555", fontSize: 11 }}>{pct}%</div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function HomeButton() {
