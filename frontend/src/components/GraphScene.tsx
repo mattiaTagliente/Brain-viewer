@@ -13,6 +13,7 @@ import { NodeLabels } from "./NodeLabels";
 import { useGraphStore } from "../store/graphStore";
 import { useReplayStore } from "../store/replayStore";
 import { useResolvedTheme, useSettingsStore } from "../store/settingsStore";
+import { GEOM_RADIUS, getNodeSize } from "../lib/nodeSize";
 import type { LayoutWorkerInput, LayoutWorkerOutput } from "../lib/types";
 
 const CAMERA_STORAGE_KEY = "brain-viewer-camera";
@@ -89,6 +90,7 @@ function CameraController({
   const incrementNavSpeed = useSettingsStore((s) => s.incrementNavSpeed);
   const decrementNavSpeed = useSettingsStore((s) => s.decrementNavSpeed);
   const showSettings = useSettingsStore((s) => s.showSettings);
+  const flyToActive = useGraphStore((s) => s.flyToActive);
   const hasAutoFit = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keysPressed = useRef<Set<string>>(new Set());
@@ -167,6 +169,7 @@ function CameraController({
   const _move = useRef(new THREE.Vector3());
 
   useFrame((_, delta) => {
+    if (flyToActive) return;
     if (keysPressed.current.size === 0) return;
     const controls = controlsRef.current;
     if (!controls) return;
@@ -233,8 +236,9 @@ function CameraController({
     hasAutoFit.current = true;
   }, [positionsValid, positions, camera]);
 
-  // Debounced save on camera change
+  // Debounced save on camera change (skip during fly-to — FlyToController saves explicitly)
   const handleChange = useCallback(() => {
+    if (flyToActive) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const pos = camera.position;
@@ -248,7 +252,7 @@ function CameraController({
         });
       }
     }, SAVE_DEBOUNCE_MS);
-  }, [camera]);
+  }, [camera, flyToActive]);
 
   return (
     <TrackballControls
@@ -268,6 +272,184 @@ function CameraController({
       onChange={handleChange}
     />
   );
+}
+
+// Fly-to animation duration in seconds
+const FLY_TO_DURATION = 1.8;
+const FLY_TO_SNAP_DISTANCE = 20;
+
+/** Quintic ease-in-out: zero velocity at both ends. */
+function quinticEaseInOut(t: number): number {
+  return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
+}
+
+/** Animates camera along a CatmullRom spline to a target entity. */
+function FlyToController({
+  controlsRef,
+}: {
+  controlsRef: MutableRefObject<any | null>;
+}) {
+  const { camera } = useThree();
+  const flyToEntityId = useGraphStore((s) => s.flyToEntityId);
+  const positions = useGraphStore((s) => s.positions);
+  const entities = useGraphStore((s) => s.entities);
+  const setFlyToActive = useGraphStore((s) => s.setFlyToActive);
+  const clearFlyTo = useGraphStore((s) => s.clearFlyTo);
+
+  const splineRef = useRef<THREE.CatmullRomCurve3 | null>(null);
+  const elapsedRef = useRef(0);
+  const startTargetRef = useRef(new THREE.Vector3());
+  const endTargetRef = useRef(new THREE.Vector3());
+  const animatingRef = useRef(false);
+
+  // Temp vectors (avoid allocation in useFrame)
+  const _v = useRef(new THREE.Vector3());
+
+  // Save camera state helper
+  const saveCamera = useCallback(() => {
+    const target = controlsRef.current?.target;
+    if (target) {
+      saveCameraState({
+        position: [camera.position.x, camera.position.y, camera.position.z],
+        target: [target.x, target.y, target.z],
+        up: [camera.up.x, camera.up.y, camera.up.z],
+      });
+    }
+  }, [camera, controlsRef]);
+
+  // Cancel animation helper
+  const cancelFlight = useCallback(() => {
+    if (!animatingRef.current) return;
+    animatingRef.current = false;
+    splineRef.current = null;
+    if (controlsRef.current) controlsRef.current.enabled = true;
+    clearFlyTo();
+    saveCamera();
+  }, [controlsRef, clearFlyTo, saveCamera]);
+
+  // Setup spline when flyToEntityId changes
+  useEffect(() => {
+    if (!flyToEntityId) {
+      if (animatingRef.current) cancelFlight();
+      return;
+    }
+
+    const pos = positions[flyToEntityId];
+    if (!pos) {
+      clearFlyTo();
+      return;
+    }
+
+    const entity = entities.find((e) => e.id === flyToEntityId);
+    const nodeScale = entity ? getNodeSize(entity.observation_count) : 1;
+
+    const P0 = camera.position.clone();
+    const targetPos = new THREE.Vector3(pos.x, pos.y, pos.z);
+
+    // Compute standoff distance
+    const standoff = Math.max(20, Math.min(GEOM_RADIUS * nodeScale * 8, 80));
+
+    // Approach direction: from camera to target
+    const travelDir = _v.current.subVectors(targetPos, P0);
+    const travelLength = travelDir.length();
+
+    if (travelLength < FLY_TO_SNAP_DISTANCE) {
+      // Short distance: snap directly
+      const offset = travelDir.normalize().multiplyScalar(-standoff);
+      camera.position.copy(targetPos).add(offset);
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(targetPos);
+        controlsRef.current.update();
+      }
+      clearFlyTo();
+      saveCamera();
+      return;
+    }
+
+    travelDir.normalize();
+    const P2 = targetPos.clone().addScaledVector(travelDir, -standoff);
+
+    // Midpoint control point — lifted perpendicular to travel
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const crossA = new THREE.Vector3().crossVectors(travelDir, worldUp);
+    let liftDir = new THREE.Vector3().crossVectors(crossA, travelDir).normalize();
+
+    // Robust fallback: if travel is nearly vertical, crossA ~ zero
+    if (liftDir.lengthSq() < 0.001) {
+      const altAxis = new THREE.Vector3(1, 0, 0);
+      const crossB = new THREE.Vector3().crossVectors(travelDir, altAxis);
+      liftDir = new THREE.Vector3().crossVectors(crossB, travelDir).normalize();
+    }
+
+    const liftAmount = Math.min(travelLength * 0.25, 150);
+    const P1 = P0.clone().lerp(P2, 0.5).addScaledVector(liftDir, liftAmount);
+
+    splineRef.current = new THREE.CatmullRomCurve3([P0, P1, P2], false, "catmullrom", 0.5);
+    elapsedRef.current = 0;
+    startTargetRef.current.copy(controlsRef.current?.target ?? P0);
+    endTargetRef.current.copy(targetPos);
+    animatingRef.current = true;
+
+    // Disable orbit controls during flight
+    if (controlsRef.current) controlsRef.current.enabled = false;
+    setFlyToActive(true);
+  }, [flyToEntityId]); // intentionally sparse deps — runs once per flyToEntityId change
+
+  // Cancel listeners on window (pointerdown / keydown)
+  useEffect(() => {
+    if (!animatingRef.current && !flyToEntityId) return;
+
+    const shouldIgnore = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || tag === "select";
+    };
+
+    const onPointerDown = () => {
+      if (animatingRef.current) cancelFlight();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (shouldIgnore(e.target)) return;
+      if (animatingRef.current) cancelFlight();
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [flyToEntityId, cancelFlight]);
+
+  // Animation loop
+  useFrame((_, delta) => {
+    if (!animatingRef.current || !splineRef.current) return;
+
+    elapsedRef.current += delta;
+    const rawT = Math.min(elapsedRef.current / FLY_TO_DURATION, 1);
+    const t = quinticEaseInOut(rawT);
+
+    // Position along spline
+    splineRef.current.getPoint(t, camera.position);
+
+    // Lerp controls target
+    if (controlsRef.current) {
+      controlsRef.current.target.lerpVectors(startTargetRef.current, endTargetRef.current, t);
+      controlsRef.current.update();
+    }
+
+    // Complete
+    if (rawT >= 1) {
+      animatingRef.current = false;
+      splineRef.current = null;
+      if (controlsRef.current) controlsRef.current.enabled = true;
+      clearFlyTo();
+      saveCamera();
+    }
+  });
+
+  return null;
 }
 
 /** Signals sceneReady on the first rendered frame after positions become valid. */
@@ -342,6 +524,7 @@ function SceneContent() {
       </mesh>
 
       <CameraController controlsEnabled={!nodePointerActive} controlsRefExternal={controlsRef} />
+      <FlyToController controlsRef={controlsRef} />
       <SceneReadySignal />
 
       {bloom.enabled && !reducedMotion && (

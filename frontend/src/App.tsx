@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { GraphScene } from "./components/GraphScene";
 import { DetailPanel } from "./components/DetailPanel";
 import { Filters } from "./components/Filters";
+import { SearchBar } from "./components/SearchBar";
 import { Timeline } from "./components/Timeline";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SpeedIndicator } from "./components/SpeedIndicator";
@@ -236,6 +237,9 @@ function HUDOverlay({
         </div>
         <div style={{ pointerEvents: "auto" }}>
           <Filters />
+        </div>
+        <div style={{ pointerEvents: "auto" }}>
+          <SearchBar />
         </div>
       </div>
 

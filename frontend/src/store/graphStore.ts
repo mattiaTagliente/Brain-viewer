@@ -33,6 +33,13 @@ interface GraphState {
   filterEntityTypes: Set<string>;
   filterScope: string | null;
 
+  // Fly-to state
+  flyToEntityId: string | null;
+  flyToActive: boolean;
+  requestFlyTo: (entityId: string) => void;
+  clearFlyTo: () => void;
+  setFlyToActive: (v: boolean) => void;
+
   // Drag state
   nodePointerActive: boolean;
   draggedEntityId: string | null;
@@ -80,6 +87,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   reducedMotion: initialReducedMotion,
   filterEntityTypes: new Set(),
   filterScope: null,
+  flyToEntityId: null,
+  flyToActive: false,
   nodePointerActive: false,
   draggedEntityId: null,
   dragPosition: null,
@@ -177,6 +186,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
             }
           : state.selectedEntityDetail,
     })),
+
+  requestFlyTo: (entityId) => set({ flyToEntityId: entityId }),
+  clearFlyTo: () => set({ flyToEntityId: null, flyToActive: false }),
+  setFlyToActive: (v) => set({ flyToActive: v }),
 
   setNodePointerActive: (v) => set({ nodePointerActive: v }),
 
