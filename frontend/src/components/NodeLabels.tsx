@@ -28,10 +28,12 @@ function TextLabel({
   text,
   position,
   emphasized,
+  dimmed,
 }: {
   text: string;
   position: [number, number, number];
   emphasized: boolean;
+  dimmed: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const textMesh = useMemo(() => new Text(), []);
@@ -42,7 +44,7 @@ function TextLabel({
   useEffect(() => {
     textMesh.text = text;
     textMesh.fontSize = 3;
-    textMesh.color = 0xffffff;
+    textMesh.color = dimmed ? 0x9ca3af : 0xffffff;
     textMesh.anchorX = "center";
     textMesh.anchorY = "bottom";
     textMesh.textAlign = "center";
@@ -52,7 +54,7 @@ function TextLabel({
     return () => {
       textMesh.dispose();
     };
-  }, [text, textMesh]);
+  }, [dimmed, text, textMesh]);
 
   useFrame(({ camera }) => {
     const group = groupRef.current;
@@ -75,9 +77,9 @@ function TextLabel({
       <mesh position={[0, 1.8, -0.05]}>
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial
-          color={emphasized ? "#111111" : "#000000"}
+          color={dimmed ? "#111827" : emphasized ? "#111111" : "#000000"}
           transparent
-          opacity={emphasized ? 0.5 : 0.35}
+          opacity={dimmed ? 0.25 : emphasized ? 0.5 : 0.35}
           depthWrite={false}
           depthTest={false}
         />
@@ -117,6 +119,11 @@ export function NodeLabels({ replayFilter = null }: { replayFilter?: Set<string>
     }
     return next;
   }, [entities, filterEntityTypes, replayFilter]);
+
+  const selectedCommunityId = useMemo(() => {
+    if (!selectedEntityId) return undefined;
+    return visibleEntities.find((entity) => entity.id === selectedEntityId)?.community_id ?? null;
+  }, [selectedEntityId, visibleEntities]);
 
   const labels = useMemo(() => {
     const candidates: LabelCandidate[] = [];
@@ -158,12 +165,18 @@ export function NodeLabels({ replayFilter = null }: { replayFilter?: Set<string>
         const yOffset = nodeOffset(candidate.entity.observation_count);
         const emphasized =
           candidate.entity.id === selectedEntityId || candidate.entity.id === hoveredEntityId;
+        const dimmed =
+          !!selectedEntityId &&
+          (selectedCommunityId !== null && selectedCommunityId !== undefined
+            ? candidate.entity.community_id !== selectedCommunityId
+            : candidate.entity.id !== selectedEntityId);
 
         return (
           <TextLabel
             key={candidate.entity.id}
             text={candidate.entity.name}
             emphasized={emphasized}
+            dimmed={dimmed}
             position={[
               candidate.position.x,
               candidate.position.y + yOffset,

@@ -24,9 +24,11 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
   const animationStartRef = useRef<Map<string, number>>(new Map());
 
   const relations = useGraphStore((s) => s.relations);
+  const entities = useGraphStore((s) => s.entities);
   const positions = useGraphStore((s) => s.positions);
   const themeConfig = useResolvedTheme();
   const focusedEntityId = useGraphStore((s) => s.focusedEntityId);
+  const selectedEntityId = useGraphStore((s) => s.selectedEntityId);
   const reducedMotion = useGraphStore((s) => s.reducedMotion);
 
   const animatingRelations = useReplayStore((s) => s.animatingRelations);
@@ -47,10 +49,26 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
     return connected;
   }, [focusedEntityId, visibleRelations]);
 
+  const selectedCommunityId = useMemo(() => {
+    if (!selectedEntityId) return undefined;
+    return entities.find((entity) => entity.id === selectedEntityId)?.community_id ?? null;
+  }, [entities, selectedEntityId]);
+
+  const activeSelectedCommunityEntityIds = useMemo(() => {
+    if (!selectedEntityId) return null;
+    if (selectedCommunityId === null || selectedCommunityId === undefined) {
+      return new Set<string>([selectedEntityId]);
+    }
+    return new Set<string>(
+      entities.filter((entity) => entity.community_id === selectedCommunityId).map((entity) => entity.id)
+    );
+  }, [selectedEntityId, selectedCommunityId]);
+
   // Build geometry with final positions only — animation handled in useFrame
   const geometry = useMemo(() => {
     const edgeColor = new THREE.Color(themeConfig.edgeStyle.color);
-    const dimColor = edgeColor.clone().multiplyScalar(0.2);
+    const dimColor = edgeColor.clone().lerp(new THREE.Color("#6b7280"), 0.75).multiplyScalar(0.18);
+    const highlightColor = edgeColor.clone().multiplyScalar(1.45);
 
     const validRelations: Relation[] = [];
     for (const rel of visibleRelations) {
@@ -74,6 +92,12 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
           connectedToFocused.has(rel.subject_id) && connectedToFocused.has(rel.object_id);
         color = isConnected ? edgeColor : dimColor;
       }
+      if (activeSelectedCommunityEntityIds) {
+        const inSelectedCommunity =
+          activeSelectedCommunityEntityIds.has(rel.subject_id) &&
+          activeSelectedCommunityEntityIds.has(rel.object_id);
+        color = inSelectedCommunity ? highlightColor : dimColor;
+      }
 
       const base = i * 6;
       verts[base] = pA.x;
@@ -96,7 +120,7 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geo.userData.validRelations = validRelations;
     return geo;
-  }, [visibleRelations, positions, themeConfig, connectedToFocused]);
+  }, [visibleRelations, positions, themeConfig, connectedToFocused, activeSelectedCommunityEntityIds]);
 
   useEffect(() => {
     if (lineRef.current) {

@@ -7,6 +7,9 @@
 - **3D force-directed graph**: entities as nodes, relations as edges, clustered by semantic community
 - **Deterministic layout**: positions are persisted and only change when the data changes
 - **Clickable nodes**: select any entity to see its full observations, relations, and metadata
+- **Community-aware selection highlighting**: selecting an entity keeps its community fully visible while dimming nodes and edges from other communities
+- **High-contrast community mode**: selected-community nodes and edges are brightened while non-selected communities are strongly grayed out
+- **Intentional reset behavior**: community highlighting is cleared only by a single click on empty space, not by orbit/pan interaction
 - **Replay system**: watch the knowledge graph grow over time with animated node spawns and edge draws
 - **Idle time compression**: skip overnight gaps to see only meaningful activity
 - **Realtime mode**: live-poll the KG database and animate changes as they happen

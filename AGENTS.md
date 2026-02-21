@@ -35,10 +35,16 @@ Brain_viewer/
 - **Stores**: graphStore.ts (graph data + layout), replayStore.ts (replay state), uiStore.ts (panel/filter visibility), settingsStore.ts (nav speed, zoom, themes — with persist middleware). Theme state lives in settingsStore, NOT graphStore.
 - **Layout**: d3-force-3d runs in Web Worker (JS lib, not backend). Params: charge -250, collide 25 (2 iter), link 80, community sphere 350.
 - **Rendering**: InstancedMesh + setColorAt for nodes. Stable material via useRef + in-place property update to avoid R3F v9.5.0 swapInstances bug. Pre-allocated maxCount from full entity list + dynamic mesh.count.
+- **Selection highlighting**: selecting an entity drives community-aware dimming across NodeMesh/EdgeLines/NodeLabels; out-of-community elements render partially gray while selected community stays at normal emphasis.
+- **Selection contrast tuning**: selected-community nodes are color-boosted and selected-community edges use an explicit highlight color; out-of-community nodes/edges are aggressively desaturated and darkened for stronger visual separation.
+- **Selection material behavior**: node material emissive intensity is reduced while selection mode is active so per-instance color dimming remains visible; this avoids emissive washout masking non-selected node dimming.
+- **Selection clear gesture**: deselection uses `Canvas.onPointerMissed` with pointer-delta threshold, so orbit/pan does not clear selection; only intentional empty-space single-click resets highlight.
 - **Labels**: fixed screen-space size via inverse camera distance scaling (REFERENCE_DISTANCE=200).
 - **Sidecar DB**: `backend/brain_viewer.db` (gitignored) for position persistence.
 - **Realtime**: WebSocket via useRealtime.ts hook. Events batched into single setState.
 - **HUD overlay**: controls are absolutely anchored to viewport edges (top-right/bottom-right/bottom-left), not grid-constrained, to prevent right-edge overflow at high-DPI and narrow viewport combinations.
+- **Startup UX continuity**: taskbar launcher splash and in-app loading overlay share a single visual language; launch transition avoids intermediate white flash.
+- **Launcher-ready handshake**: `scripts/loading.html` now hosts frontend in an iframe and keeps splash until frontend posts `brain-viewer-ready`; status updates flow via `postMessage`.
 
 ## Development
 
@@ -99,3 +105,4 @@ Before returning results, call `kg_handoff_check` to verify knowledge was persis
 Context7 is available globally for up-to-date library docs. Tools:
 - `resolve-library-id` — lookup library ID by name (e.g., "react", "three.js", "@react-three/fiber")
 - `get-library-docs` — retrieve docs and examples for a resolved library ID
+

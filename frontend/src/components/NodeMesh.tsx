@@ -58,6 +58,7 @@ function TypeGroup({
   themeConfig,
   hoveredEntityId,
   selectedEntityId,
+  selectedCommunityId,
   focusedConnected,
   onSelect,
   onNodePointerDown,
@@ -75,6 +76,7 @@ function TypeGroup({
   themeConfig: ThemeConfig;
   hoveredEntityId: string | null;
   selectedEntityId: string | null;
+  selectedCommunityId: string | null | undefined;
   focusedConnected: Set<string> | null;
   onSelect: (id: string | null) => void;
   onNodePointerDown: (entityId: string, hitPoint: THREE.Vector3, screenX: number, screenY: number) => void;
@@ -116,11 +118,13 @@ function TypeGroup({
     const color = new THREE.Color(hex);
     mat.color.set(color);
     mat.emissive.set(color);
-    mat.emissiveIntensity = themeConfig.nodeMaterial.emissive;
+    // Emissive can visually overpower instance colors; reduce it while an entity is selected
+    // so community dimming/highlighting remains clearly visible.
+    mat.emissiveIntensity = selectedEntityId ? themeConfig.nodeMaterial.emissive * 0.12 : themeConfig.nodeMaterial.emissive;
     mat.metalness = themeConfig.nodeMaterial.metalness;
     mat.roughness = themeConfig.nodeMaterial.roughness;
     mat.needsUpdate = true;
-  }, [themeConfig, type]);
+  }, [selectedEntityId, themeConfig, type]);
 
   // Dispose material only on component unmount
   useEffect(() => {
@@ -138,6 +142,8 @@ function TypeGroup({
     mesh.count = entities.length;
 
     const baseColor = new THREE.Color(themeConfig.nodeColors[type] || "#888888");
+    const dimGray = new THREE.Color("#6b7280");
+    const highlightTint = new THREE.Color("#f8fafc");
 
     for (let i = 0; i < entities.length; i += 1) {
       const entity = entities[i];
@@ -165,6 +171,20 @@ function TypeGroup({
 
       if (focusedConnected && !focusedConnected.has(entity.id)) {
         tempColor.multiplyScalar(0.3);
+      }
+
+      if (selectedEntityId) {
+        const inSelectedCommunity =
+          selectedCommunityId !== null && selectedCommunityId !== undefined
+            ? entity.community_id === selectedCommunityId
+            : entity.id === selectedEntityId;
+        if (inSelectedCommunity) {
+          tempColor.multiplyScalar(1.55);
+          tempColor.lerp(highlightTint, 0.15);
+        } else {
+          tempColor.lerp(dimGray, 0.8);
+          tempColor.multiplyScalar(0.12);
+        }
       }
 
       if (!reducedMotion) {
@@ -201,6 +221,7 @@ function TypeGroup({
     positionOverrides,
     reducedMotion,
     selectedEntityId,
+    selectedCommunityId,
     themeConfig,
     type,
   ]);
@@ -243,7 +264,15 @@ function TypeGroup({
 
   useEffect(() => {
     updateInstances(performance.now());
-  }, [positions, themeConfig, hoveredEntityId, selectedEntityId, focusedConnected, updateInstances]);
+  }, [
+    positions,
+    themeConfig,
+    hoveredEntityId,
+    selectedEntityId,
+    selectedCommunityId,
+    focusedConnected,
+    updateInstances,
+  ]);
 
   useFrame(() => {
     const hasOverrides = positionOverrides.size > 0;
@@ -634,6 +663,11 @@ export function NodeMesh({
     return connected;
   }, [focusedEntityId]);
 
+  const selectedCommunityId = useMemo(() => {
+    if (!selectedEntityId) return undefined;
+    return entities.find((entity) => entity.id === selectedEntityId)?.community_id ?? null;
+  }, [entities, selectedEntityId]);
+
   if (visibleEntities.length === 0) return null;
 
   return (
@@ -648,6 +682,7 @@ export function NodeMesh({
           themeConfig={themeConfig}
           hoveredEntityId={hoveredEntityId}
           selectedEntityId={selectedEntityId}
+          selectedCommunityId={selectedCommunityId}
           focusedConnected={focusedConnected}
           onSelect={(id) => { void selectEntity(id); }}
           onNodePointerDown={handleNodePointerDown}

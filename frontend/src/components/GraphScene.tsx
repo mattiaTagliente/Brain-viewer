@@ -477,8 +477,6 @@ function SceneReadySignal() {
 function SceneContent() {
   const themeConfig = useResolvedTheme();
   const reducedMotion = useGraphStore((s) => s.reducedMotion);
-  const focusEntity = useGraphStore((s) => s.focusEntity);
-  const selectEntity = useGraphStore((s) => s.selectEntity);
   const nodePointerActive = useGraphStore((s) => s.nodePointerActive);
 
   const replayActive = useReplayStore((s) => s.replayActive);
@@ -486,11 +484,6 @@ function SceneContent() {
   const visibleRelationIds = useReplayStore((s) => s.visibleRelationIds);
 
   const controlsRef = useRef<any>(null);
-
-  const handleMissClick = useCallback(() => {
-    void selectEntity(null);
-    focusEntity(null);
-  }, [selectEntity, focusEntity]);
 
   const bloom = themeConfig.postProcessing.bloom;
 
@@ -516,12 +509,6 @@ function SceneContent() {
       />
       <EdgeLines replayFilter={replayActive ? visibleRelationIds : null} />
       <NodeLabels replayFilter={replayActive ? visibleEntityIds : null} />
-
-      {/* Invisible click plane for deselection */}
-      <mesh onClick={handleMissClick} visible={false}>
-        <sphereGeometry args={[50000, 8, 8]} />
-        <meshBasicMaterial side={THREE.BackSide} />
-      </mesh>
 
       <CameraController controlsEnabled={!nodePointerActive} controlsRefExternal={controlsRef} />
       <FlyToController controlsRef={controlsRef} />
@@ -552,6 +539,17 @@ export function GraphScene() {
   const persistPositions = useGraphStore((s) => s.persistPositions);
   const setLayoutProgress = useGraphStore((s) => s.setLayoutProgress);
   const setError = useGraphStore((s) => s.setError);
+  const selectEntity = useGraphStore((s) => s.selectEntity);
+  const focusEntity = useGraphStore((s) => s.focusEntity);
+
+  const handlePointerMissed = useCallback((event: any) => {
+    // Only clear on deliberate single-click in empty space.
+    // Orbit/pan interactions produce a larger pointer delta and are ignored.
+    const pointerDelta = typeof event?.delta === "number" ? event.delta : 0;
+    if (pointerDelta > 4) return;
+    void selectEntity(null);
+    focusEntity(null);
+  }, [focusEntity, selectEntity]);
 
   // Run layout worker when positions are not valid
   useEffect(() => {
@@ -653,6 +651,7 @@ export function GraphScene() {
         camera={{ position: [0, 0, 300], fov: 60, near: 0.1, far: 100000 }}
         style={{ background: themeConfig.background }}
         gl={{ antialias: true }}
+        onPointerMissed={handlePointerMissed}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.2;
