@@ -6,7 +6,7 @@ import hashlib
 from typing import Any
 
 # Bump this when layout algorithm parameters change to invalidate cached positions.
-LAYOUT_VERSION = "v2"
+LAYOUT_VERSION = "v3"
 
 
 def compute_structural_hash(

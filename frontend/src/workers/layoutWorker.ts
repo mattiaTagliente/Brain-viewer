@@ -61,7 +61,7 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Build community centroid map
   const communityIds = [...new Set(communities.map((c) => c.id))].sort();
   const commCentroids: Record<string, { x: number; y: number; z: number }> = {};
-  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 600);
+  const spherePoints = fibonacciSphere(Math.max(communityIds.length, 1), 300);
   communityIds.forEach((cid, i) => {
     commCentroids[cid] = spherePoints[i] || { x: 0, y: 0, z: 0 };
   });
@@ -83,9 +83,9 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
     const centroid = commId ? commCentroids[commId] : { x: 0, y: 0, z: 0 };
 
     // Use existing position, or place near community centroid with jitter
-    const x = existing?.x ?? centroid.x + (rng() - 0.5) * 120;
-    const y = existing?.y ?? centroid.y + (rng() - 0.5) * 120;
-    const z = existing?.z ?? centroid.z + (rng() - 0.5) * 120;
+    const x = existing?.x ?? centroid.x + (rng() - 0.5) * 60;
+    const y = existing?.y ?? centroid.y + (rng() - 0.5) * 60;
+    const z = existing?.z ?? centroid.z + (rng() - 0.5) * 60;
 
     return { id: e.id, x, y, z, communityId: commId, observationCount: e.observation_count };
   });
@@ -161,16 +161,16 @@ self.onmessage = (event: MessageEvent<LayoutWorkerInput>) => {
   // Create simulation
   const simulation = forceSimulation(nodes, 3)
     .randomSource(rng)
-    .force("charge", forceManyBody().strength(-400).distanceMax(800))
+    .force("charge", forceManyBody().strength(-200).distanceMax(400))
     .force(
       "link",
       forceLink(links)
         .id((d: any) => d.id)
-        .distance(120)
+        .distance(60)
         .strength(0.2)
     )
     .force("center", forceCenter(0, 0, 0).strength(0.03))
-    .force("collide", forceCollide((d: SimNode) => 6 * GEOM_RADIUS * getNodeSize(d.observationCount)).iterations(10))
+    .force("collide", forceCollide((d: SimNode) => 3 * GEOM_RADIUS * getNodeSize(d.observationCount)).iterations(10))
     .force("community", communityForce as any)
     .alpha(isIncremental ? 0.1 : 1.0)
     .alphaMin(0.001)

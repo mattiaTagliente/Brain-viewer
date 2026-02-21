@@ -211,7 +211,7 @@ export function EdgeLines({ replayFilter = null }: { replayFilter?: Set<string> 
         transparent
         opacity={themeConfig.edgeStyle.opacity}
         depthWrite={false}
-        fog={false}
+        fog
       />
     </lineSegments>
   );

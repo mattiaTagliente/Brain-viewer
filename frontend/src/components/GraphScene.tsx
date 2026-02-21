@@ -259,8 +259,8 @@ function CameraController({
       ref={setControlsRef}
       domElement={controlsDomElement}
       enabled={controlsEnabled}
-      rotateSpeed={orbitSensitivity * 0.1}
-      zoomSpeed={zoomSensitivity * 0.1}
+      rotateSpeed={orbitSensitivity * 0.5}
+      zoomSpeed={zoomSensitivity * 0.01}
       panSpeed={1}
       noRotate={false}
       noZoom={false}
@@ -592,9 +592,9 @@ export function GraphScene() {
         if (!merged[entity.id]) {
           const centroid = entity.community_id ? commCentroids[entity.community_id] : null;
           merged[entity.id] = {
-            x: (centroid?.x ?? 0) + (Math.random() - 0.5) * 120,
-            y: (centroid?.y ?? 0) + (Math.random() - 0.5) * 120,
-            z: (centroid?.z ?? 0) + (Math.random() - 0.5) * 120,
+            x: (centroid?.x ?? 0) + (Math.random() - 0.5) * 60,
+            y: (centroid?.y ?? 0) + (Math.random() - 0.5) * 60,
+            z: (centroid?.z ?? 0) + (Math.random() - 0.5) * 60,
           };
         }
       }

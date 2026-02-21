@@ -149,7 +149,7 @@ export function SearchBar() {
             position: "absolute",
             top: "100%",
             right: 0,
-            width: 280,
+            width: 220,
             marginTop: 4,
             background: "rgba(0,0,0,0.85)",
             border: "1px solid #444",
