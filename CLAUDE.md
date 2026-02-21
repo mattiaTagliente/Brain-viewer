@@ -40,6 +40,7 @@ Brain_viewer/
 - **Realtime**: WebSocket via useRealtime.ts hook. Events batched into single setState.
 - **HUD overlay**: controls are absolutely anchored to viewport edges (top-right/bottom-right/bottom-left), not grid-constrained, to prevent right-edge overflow at high-DPI and narrow viewport combinations.
 - **Startup UX continuity**: taskbar launcher splash and in-app loading overlay share a single visual language; launch transition avoids intermediate white flash.
+- **Launcher-ready handshake**: `scripts/loading.html` now hosts frontend in an iframe and keeps splash until frontend posts `brain-viewer-ready`; status updates flow via `postMessage`.
 
 ## Development
 

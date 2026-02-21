@@ -19,6 +19,13 @@ function LoadingOverlay() {
   const relations = useGraphStore((s) => s.relations);
   const layoutProgress = useGraphStore((s) => s.layoutProgress);
   const sceneReady = useGraphStore((s) => s.sceneReady);
+  const isEmbedded = (() => {
+    try {
+      return window.parent !== window;
+    } catch {
+      return false;
+    }
+  })();
   const [fadingOut, setFadingOut] = useState(false);
   const [hidden, setHidden] = useState(false);
 
@@ -35,6 +42,28 @@ function LoadingOverlay() {
       setHidden(false);
     }
   }, [sceneReady, error]);
+
+  useEffect(() => {
+    if (!isEmbedded) return;
+    if (window.parent && window.parent !== window) {
+      if (error) {
+        window.parent.postMessage({ type: "brain-viewer-error" }, "*");
+        return;
+      }
+      let status = "connecting";
+      if (loading) {
+        status = "loading graph data";
+      } else if (entities.length > 0 && layoutProgress < 1) {
+        status = `computing layout ${Math.round(layoutProgress * 100)}%`;
+      } else if (entities.length > 0) {
+        status = "preparing scene";
+      }
+      window.parent.postMessage({ type: "brain-viewer-status", status }, "*");
+      if (sceneReady) {
+        window.parent.postMessage({ type: "brain-viewer-ready" }, "*");
+      }
+    }
+  }, [isEmbedded, loading, entities.length, layoutProgress, sceneReady, error]);
 
   if (error) {
     return (
@@ -53,6 +82,8 @@ function LoadingOverlay() {
       </div>
     );
   }
+
+  if (isEmbedded) return null;
 
   if (hidden) return null;
 

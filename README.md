@@ -15,6 +15,7 @@
 - **Responsive HUD controls**: search, entity filters, and home controls remain anchored inside viewport edges across desktop and mobile resolutions
 - **Taskbar launcher window persistence**: app-window Chrome size is seeded once, then reuses your last manual resize on subsequent launches
 - **Continuous startup splash**: launcher splash now stays visually consistent through app boot (no white flash and no style swap to a separate gray loader)
+- **Single startup surface**: launcher keeps the animated splash visible while app loads in an embedded iframe, then dismisses on explicit `brain-viewer-ready` signal from frontend
 
 ## Tech Stack
 
