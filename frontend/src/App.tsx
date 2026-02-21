@@ -75,35 +75,52 @@ function LoadingOverlay() {
     <div style={{
       position: "absolute", inset: 0, zIndex: 100,
       display: "flex", alignItems: "center", justifyContent: "center",
-      background: "rgba(0,0,0,0.92)",
-      fontFamily: "'Inter', system-ui, sans-serif",
-      flexDirection: "column", gap: 16,
+      background: "#000",
+      fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
+      flexDirection: "column", gap: 14,
       opacity: fadingOut ? 0 : 1,
       transition: "opacity 0.5s ease-out",
       pointerEvents: fadingOut ? "none" : "auto",
     }}>
-      <div style={{ color: "#ccc", fontSize: 22, fontWeight: 600, letterSpacing: 1 }}>
-        Brain Viewer
+      <div
+        style={{
+          fontSize: "2.4rem",
+          fontWeight: 300,
+          letterSpacing: "0.3em",
+          color: "#00ccff",
+          textShadow: "0 0 30px rgba(0,204,255,0.5), 0 0 60px rgba(0,204,255,0.2)",
+          marginBottom: 8,
+        }}
+      >
+        BRAIN VIEWER
       </div>
 
       {entities.length > 0 && (
-        <div style={{ color: "#666", fontSize: 12, display: "flex", gap: 12 }}>
+        <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, display: "flex", gap: 12 }}>
           <span>{entities.length} entities</span>
           <span>{relations.length} relations</span>
         </div>
       )}
 
-      <div style={{ color: "#888", fontSize: 13 }}>{status}</div>
+      <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, letterSpacing: "0.15em", textTransform: "lowercase" }}>
+        {status}
+      </div>
+
+      <div style={{ display: "inline-flex", gap: 6 }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ccff", opacity: 0.35 }} />
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ccff", opacity: 0.55 }} />
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ccff", opacity: 0.8 }} />
+      </div>
 
       {showProgress && (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <div style={{ width: 220, height: 3, background: "#2a2a2a", borderRadius: 2 }}>
+          <div style={{ width: 220, height: 3, background: "rgba(255,255,255,0.12)", borderRadius: 2 }}>
             <div style={{
-              width: `${pct}%`, height: "100%", background: "#4a90d9",
+              width: `${pct}%`, height: "100%", background: "#00ccff",
               borderRadius: 2, transition: "width 0.3s",
             }} />
           </div>
-          <div style={{ color: "#555", fontSize: 11 }}>{pct}%</div>
+          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>{pct}%</div>
         </div>
       )}
     </div>

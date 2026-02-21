@@ -120,7 +120,6 @@ draw();
 
 // Poll Vite dev server until it responds
 const statusEl = document.getElementById('status');
-const overlayEl = document.getElementById('overlay');
 let attempts = 0;
 
 function checkServer() {
@@ -128,9 +127,8 @@ function checkServer() {
   if (attempts > 6) statusEl.textContent = 'almost ready';
   const img = new Image();
   img.onload = () => {
-    statusEl.textContent = 'connected';
-    overlayEl.classList.add('fade-out');
-    setTimeout(() => { window.location.href = 'http://localhost:5174/'; }, 650);
+    statusEl.textContent = 'opening app';
+    setTimeout(() => { window.location.href = 'http://localhost:5174/'; }, 60);
   };
   img.onerror = () => setTimeout(checkServer, 700);
   img.src = 'http://localhost:5174/vite.svg?' + Date.now();
