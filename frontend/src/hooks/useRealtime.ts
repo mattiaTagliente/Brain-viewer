@@ -20,11 +20,6 @@ interface WsEventsMessage {
   watermarks: Partial<Record<RowidKey, number>>;
 }
 
-interface WsHeartbeatMessage {
-  type: "heartbeat";
-  seq: number;
-}
-
 interface WsEvent {
   event_type: string;
   timestamp: string;

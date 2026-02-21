@@ -210,22 +210,15 @@ function HUDOverlay({
         inset: 0,
         zIndex: 20,
         pointerEvents: "none",
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
-        gridTemplateRows: "auto 1fr auto",
         padding: 12,
       }}
     >
-      {/* top-left: empty */}
-      <div style={{ gridColumn: 1, gridRow: 1, alignSelf: "start", justifySelf: "start" }} />
-
       {/* top-right: settings button + filters */}
       <div
         style={{
-          gridColumn: 3,
-          gridRow: 1,
-          alignSelf: "start",
-          justifySelf: "end",
+          position: "absolute",
+          top: 12,
+          right: 12,
           display: "flex",
           flexDirection: "column",
           gap: 8,
@@ -246,10 +239,9 @@ function HUDOverlay({
       {/* bottom-left: status bar */}
       <div
         style={{
-          gridColumn: 1,
-          gridRow: 3,
-          alignSelf: "end",
-          justifySelf: "start",
+          position: "absolute",
+          bottom: 12,
+          left: 12,
           pointerEvents: "none",
         }}
       >
@@ -259,10 +251,10 @@ function HUDOverlay({
       {/* bottom-center: speed indicator (transient) + timeline */}
       <div
         style={{
-          gridColumn: 2,
-          gridRow: 3,
-          alignSelf: "end",
-          justifySelf: "center",
+          position: "absolute",
+          bottom: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "min(980px, calc(100vw - 24px))",
           display: "flex",
           flexDirection: "column",
@@ -282,10 +274,9 @@ function HUDOverlay({
       {/* bottom-right: speed badge + home button */}
       <div
         style={{
-          gridColumn: 3,
-          gridRow: 3,
-          alignSelf: "end",
-          justifySelf: "end",
+          position: "absolute",
+          bottom: 12,
+          right: 12,
           display: "flex",
           flexDirection: "row",
           alignItems: "flex-end",

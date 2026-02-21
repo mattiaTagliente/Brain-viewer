@@ -38,6 +38,7 @@ Brain_viewer/
 - **Labels**: fixed screen-space size via inverse camera distance scaling (REFERENCE_DISTANCE=200).
 - **Sidecar DB**: `backend/brain_viewer.db` (gitignored) for position persistence.
 - **Realtime**: WebSocket via useRealtime.ts hook. Events batched into single setState.
+- **HUD overlay**: controls are absolutely anchored to viewport edges (top-right/bottom-right/bottom-left), not grid-constrained, to prevent right-edge overflow at high-DPI and narrow viewport combinations.
 
 ## Development
 
@@ -62,6 +63,27 @@ Core tables (all have `scope TEXT` column):
 - Replay system reconstructs timeline from existing `date_added` fields, with idle time compression
 - Realtime mode via SQLite WAL polling every 1-2s, pushed to frontend via WebSocket
 - Observation count dedup via seenObservationIdsRef + seq tracking
+
+## Skill Routing Protocol
+
+Before starting any task, check if a matching skill exists. Load the skill's `SKILL.md` using this resolution chain (first match wins):
+1. `<project_root>/.claude/skills/<name>/SKILL.md` — project junctions resolve all tiers
+2. `~/.claude/skills/<name>/SKILL.md` — global tier
+3. `~/.claude/skill-sets/*/<name>/SKILL.md` — shared tier
+
+Follow the skill's phased workflow. Do not skip phases. Common mappings for this project:
+
+| User request | Skill |
+|---|---|
+| browser testing, viewport check, visual regression | `playwright-testing` |
+| React health scan, dead code, lint | `react-doctor` |
+| React performance optimization | `react-perf` |
+| web quality/accessibility audit | `web-quality` |
+| React component architecture | `composition-patterns` |
+| Tailwind CSS styling | `tailwind-v4` |
+| shadcn/ui components | `shadcn-ui` |
+| creative work, new features | `brainstorming` |
+| shell command fails on Windows | `shell-windows` |
 
 ## Knowledge Graph Protocol
 

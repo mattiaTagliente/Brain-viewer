@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "knowledge-graph": {
+      "command": "C:\\Users\\matti\\venvs\\llm_harness\\Scripts\\python.exe",
+      "args": ["-m", "llm_harness.mcp_servers.knowledge_graph.server"],
+      "env": {
+        "PROJECT_ROOT": "C:\\Users\\matti\\Dev\\Brain_viewer"
+      }
+    },
+    "manuscript": {
+      "command": "C:\\Users\\matti\\venvs\\llm_harness\\Scripts\\python.exe",
+      "args": ["-m", "llm_harness.mcp_servers.manuscript.server"]
+    },
+    "ocr": {
+      "command": "C:\\Users\\matti\\venvs\\llm_harness\\Scripts\\python.exe",
+      "args": ["-m", "llm_harness.mcp_servers.ocr.server"]
+    }
+  }
+}
