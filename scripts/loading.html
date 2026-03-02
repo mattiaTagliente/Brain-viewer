@@ -192,18 +192,17 @@ window.addEventListener('message', (event) => {
   }
 });
 
-// Poll Vite dev server until it responds, then mount app in iframe.
+// Poll Brain Viewer's app-specific health asset (not generic vite.svg).
+// Uses Image() instead of fetch() to avoid CORS blocking from file:// origin.
 let attempts = 0;
 
 function checkServer() {
   attempts++;
   if (attempts > 6) setStatus('almost ready');
   const img = new Image();
-  img.onload = () => {
-    mountAppFrame();
-  };
+  img.onload = () => mountAppFrame();
   img.onerror = () => setTimeout(checkServer, 700);
-  img.src = 'http://localhost:5174/vite.svg?' + Date.now();
+  img.src = 'http://localhost:5174/brain-viewer-health.svg?' + Date.now();
 }
 checkServer();
 </script>

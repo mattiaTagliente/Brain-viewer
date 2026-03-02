@@ -105,3 +105,4 @@ Before returning results, call `kg_handoff_check` to verify knowledge was persis
 Context7 is available globally for up-to-date library docs. Tools:
 - `resolve-library-id` — lookup library ID by name (e.g., "react", "three.js", "@react-three/fiber")
 - `get-library-docs` — retrieve docs and examples for a resolved library ID
+
