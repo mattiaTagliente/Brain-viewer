@@ -6,7 +6,7 @@
 
 - **Backend**: Python 3.11, FastAPI, uvicorn, numpy
 - **Frontend**: React 19, TypeScript, Vite, React Three Fiber, Zustand, Tailwind CSS
-- **Data source**: single SQLite database at `C:/Users/matti/AppData/Local/llm_harness/knowledge.db` (read-only, via platformdirs)
+- **Data source**: the single Sherlock KG SQLite database, `knowledge.db` in the platformdirs `sherlock` data dir, or `KNOWLEDGE_GLOBAL_DB` (read-only)
 
 ## Project Structure
 

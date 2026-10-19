@@ -10,23 +10,26 @@ from typing import Any
 
 
 def _default_kg_path() -> Path:
-    """Resolve the KG database path from environment or platform default."""
+    """Resolve the KG database path: env override, else Sherlock's data dir.
+
+    Mirrors ``sherlock.common.paths``: the app dir is ``sherlock``; the legacy
+    ``llm_harness`` dir is used only while knowledge.db exists there alone.
+    """
     override = os.environ.get("KNOWLEDGE_GLOBAL_DB")
     if override:
         return Path(override)
     try:
         import platformdirs
-        return Path(platformdirs.user_data_dir("llm_harness", appauthor=False)) / "knowledge.db"
+        base = Path(platformdirs.user_data_dir("sherlock", appauthor=False))
+        legacy = Path(platformdirs.user_data_dir("llm_harness", appauthor=False))
     except ImportError:
-        pass
-    # Windows: check AppData/Local (where platformdirs would put it)
-    local_appdata = os.environ.get("LOCALAPPDATA")
-    if local_appdata:
-        win_path = Path(local_appdata) / "llm_harness" / "knowledge.db"
-        if win_path.exists():
-            return win_path
-    # Unix fallback
-    return Path.home() / ".llm_harness" / "knowledge.db"
+        local_appdata = os.environ.get("LOCALAPPDATA")
+        root = Path(local_appdata) if local_appdata else None
+        base = root / "sherlock" if root else Path.home() / ".sherlock"
+        legacy = root / "llm_harness" if root else Path.home() / ".llm_harness"
+    if not (base / "knowledge.db").is_file() and (legacy / "knowledge.db").is_file():
+        return legacy / "knowledge.db"
+    return base / "knowledge.db"
 
 
 class KGReader:

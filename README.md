@@ -24,7 +24,7 @@
 
 - **Backend**: Python 3.11, FastAPI, uvicorn, numpy
 - **Frontend**: React 19, TypeScript, Vite, React Three Fiber, Zustand, Tailwind CSS
-- **Data**: reads from `~/.llm_harness/knowledge.db` (SQLite, read-only)
+- **Data**: reads the Sherlock KG `knowledge.db` from the platformdirs `sherlock` data dir, or `KNOWLEDGE_GLOBAL_DB` (SQLite, read-only)
 
 ## Development
 
