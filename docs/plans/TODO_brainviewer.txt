@@ -1,0 +1,9 @@
+Fix
+[ ] click or double click do not open the properties window
+[ ] if the properties window opens, the entity types is overlapping its content
+[ ] replay is limited to only 5000 items (need to scale to millions)
+[ ] brightness of connections for Neural and Organic is too low (low visibility)
+
+Improvements
+[ ] need for navigation system (pan forward, backward, up, down, left, right)
+[ ] click and drag on a node must let the use momentarily change its position, then the item elasticly returns in its correct position (only visual effect, no changes in stored position)
